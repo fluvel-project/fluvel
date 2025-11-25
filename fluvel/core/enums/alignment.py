@@ -9,8 +9,8 @@ AlignmentTypes = Literal[
     "right",
     "left",
     "center",
-    "h_center",
-    "v_center",
+    "h-center",
+    "v-center",
     "justify",
     "baseline",
     "top-left",
@@ -52,8 +52,8 @@ class Alignment:
         "right": RIGHT,
         "left": LEFT,
         "center": CENTER,
-        "h_center": H_CENTER,
-        "v_center": V_CENTER,
+        "h-center": H_CENTER,
+        "v-center": V_CENTER,
         "justify": JUSTIFY,
         "baseline": BASELINE,
         "top-left": TOP_LEFT,
@@ -69,5 +69,4 @@ class Alignment:
     @classmethod
     def get(cls, alignment: AlignmentTypes) -> Qt.AlignmentFlag:
 
-        return cls.ALIGNMENT_MAP.get(alignment)
-
+        return cls.ALIGNMENT_MAP.get(alignment, cls.CENTER)

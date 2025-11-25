@@ -603,6 +603,9 @@ class State:
 
                     # Establishing the new property value
                     widget.setProperty(prop_name, new_value)
+
+                    # Prox
+                    # widget[prop_name] = new_value
         
         # Finally, we link the reactive function defined above
         # to the ‘state_changed’ signal of the StateGroup ‘state_obj’ so that
@@ -640,8 +643,7 @@ class State:
                 if args:
                     # Si la señal emite valores
                     widget_value = args[0]
-                    print(args)
-
+                    
                 else:
                     widget_value = widget.property(prop_name)
 
@@ -660,7 +662,7 @@ class State:
         from anywhere in the application, allowing direct interaction
         with methods such as :py:meth:`StateGroup.get` and :py:meth:`StateGroup.set`.
 
-        :param group_alias: The short, unique alias of the state group (e.g., ``“vm”``).
+        :param group_alias: The short, unique alias of the state group (e.g., ``"vm"``).
         :type group_alias: str
         :returns: The instance of :py:class:`StateGroup` associated with the alias.
         :rtype: :py:class:`StateGroup`

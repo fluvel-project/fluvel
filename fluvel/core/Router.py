@@ -1,8 +1,8 @@
 from dataclasses import dataclass 
-from typing import Type
+from typing import Type, TYPE_CHECKING
 
 # Fluvel
-from fluvel.core.abstract_models.ABCAbstractPage import AbstractPage
+from fluvel.core.abstract_models.AbstractPage import AbstractPage
 from fluvel.core.AppWindow import AppWindow
 
 # Composer
@@ -11,11 +11,14 @@ from fluvel.composer import Animator
 # PySide6
 from PySide6.QtWidgets import QStackedWidget
 
+if TYPE_CHECKING:
+    from fluvel.core.App import App
+
 class Router:
     """
     Manages the navigation flow and registration of views (pages) within the application.
     
-    The Router is a static utility class that uses the main window's central widget 
+    The Router is a static utility class that uses the main main_window's central widget 
     (:py:class:`PySide6.QtWidgets.QStackedWidget`) to display views. It handles 
     lazy instantiation of views and provides methods for animation during transitions.
     """
@@ -29,11 +32,10 @@ class Router:
         :type name: str
 
         :ivar view_class: The uninstantiated class of the view, decorated by :py:func:`route`.
-        :type view_class: Type[:py:class:`~fluvel.core.abstract_models.ABCAbstractPage.AbstractPage`]
+        :type view_class: Type[:py:class:`~fluvel.core.abstract_models.AbstractPage.AbstractPage`]
 
         :ivar view_instance: The actual instance of the view after it has been shown for the first time.
-        :type view_instance: :py:class:`~fluvel.core.abstract_models.ABCAbstractPage.AbstractPage`
-        
+        :type view_instance: :py:class:`~fluvel.core.abstract_models.AbstractPage.AbstractPage`
         """
         name            : str
         view_class      : Type[AbstractPage]
@@ -44,26 +46,26 @@ class Router:
     _current_route  : Route = None
 
     @classmethod
-    def init(cls, window: AppWindow) -> None:
+    def init(cls, app: "App", main_window: AppWindow) -> None:
         """
-        Initializes the router by linking it to the main application window.
+        Initializes the router by linking it to the main application main_window.
         
         This method must be called before registering or showing any routes.
-        It also sets global variables on the :py:class:`~fluvel.core.abstract_models.ABCAbstractPage.AbstractPage`
-        base class for access to the root window components.
+        It also sets global variables on the :py:class:`~fluvel.core.abstract_models.AbstractPage.AbstractPage`
+        base class for access to the root main_window components.
 
-        :param window: The main application window instance containing the central widget.
-        :type window: :py:class:`~fluvel.core.AppWindow`
+        :param main_window: The main application main_window instance containing the central widget.
+        :type main_window: :py:class:`~fluvel.core.SKMainWindow.SKMainWindow`
         :rtype: None
         """
-        cls._window = window
-        AbstractPage._set_globals(cls._window.root, cls._window)
+        cls._window = main_window
+        AbstractPage._set_globals(app, cls._window)
               
     @classmethod
     def show(cls, name: str, animation: str | None = "fade_in", **kwargs) -> None:
         """
         Displays the view assigned to the given route name in the central widget 
-        of the main window, optionally applying an animation.
+        of the main main_window, optionally applying an animation.
 
         Views are instantiated **lazily**: the view's ``build_ui()`` method is only called 
         the first time the view is requested via this method.
@@ -106,7 +108,7 @@ class Router:
             target_widget = route.view_instance
             central_widget.setCurrentWidget(target_widget)
 
-            # Set animation
+            # Initialize animation
             if animation:
                 anim = getattr(Animator, animation)(target_widget, **kwargs)
                 anim.start()

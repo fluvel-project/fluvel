@@ -1,8 +1,8 @@
 
-class SilkBindingError(ValueError):
-    """Excepción lanzada cuando la sintaxis del Data Binding es inválida."""
+class FluvelBindingError(ValueError):
+    """Exception thrown when the Data Binding syntax is invalid."""
     pass
 
-class SilkStateError(RuntimeError):
-    """Excepción lanzada por errores relacionados con el StateManager."""
+class FluvelStateError(RuntimeError):
+    """Exception thrown due to errors related to the StateManager."""
     pass

@@ -1,16 +1,10 @@
 import functools
-from typing import Unpack, TypedDict, TypeVar, Callable, Tuple, Type, Union
+from typing import Unpack, TypedDict, TypeVar, Callable, Tuple, Type
 
 # Flvuel Core
 from fluvel.core.tools import configure_process
 from fluvel.core.enums.alignment import AlignmentTypes, Alignment
-
-# Fluvel Widgets
-from fluvel.components.widgets.FLabel import FLabel, FLabelKwargs
-from fluvel.components.widgets.FButton import FButton, FButtonKwargs
-from fluvel.components.widgets.FInput import FInput, FInputKwargs
-from fluvel.components.widgets.FCheckBox import FCheckBox, FCheckBoxKwargs
-from fluvel.components.widgets.FRadioButton import FRadioButton, FRadioButtonKwargs
+from fluvel.core.abstract_models.FLayoutAPI import FLayoutAPI
 
 # PySide6
 from PySide6.QtWidgets import QWidget, QLayout
@@ -18,14 +12,8 @@ from PySide6.QtWidgets import QWidget, QLayout
 TWidget = TypeVar("TWidget", bound=QWidget)
 TFactory = TypeVar("TFactory", bound=Callable)
 
-class AddWidgetKwargs(TypedDict):
-
-    alignment       : AlignmentTypes
-    stretch         : int
-
-
-class LayoutKwargs(TypedDict, total=False):
-    """gemi
+class FLayoutKwargs(TypedDict, total=False):
+    """
     Keyword arguments for configuring the layout distribution.
     """
 
@@ -45,7 +33,7 @@ class LayoutKwargs(TypedDict, total=False):
     max_width       : int
     max_height      : int
     
-class FluvelLayout:
+class FLayout(FLayoutAPI):
     """
     A class specific to `Fluvel` that provides methods for adding QWidgets to QLayouts.
     """
@@ -77,7 +65,7 @@ class FluvelLayout:
         "max_size": "setMaximumSize",
     }
 
-    def adjust(self, **kwargs: Unpack[LayoutKwargs]) -> None:
+    def adjust(self, **kwargs: Unpack[FLayoutKwargs]) -> None:
         """
         Adjusts the main layout settings and size properties of its container.
 
@@ -163,11 +151,12 @@ class FluvelLayout:
         :rtype: TWidget
         """
 
-        # create the widget using the widget_class class provided
-        # then returns the instance
-        widget = widget_class(**kwargs)
+        stretch = kwargs.pop("stretch", 0)
+        alignment = kwargs.pop("alignment", None)
 
-        self.add_widget(widget, kwargs.get("alignment"), kwargs.get("stretch", 0))
+        widget: TWidget = widget_class(**kwargs)
+        
+        self.add_widget(widget, alignment, stretch)
 
         return widget
     
@@ -197,8 +186,8 @@ class FluvelLayout:
             Using `TFactory` with :func:`~functools.wraps` is crucial for preserving argument information
             and code *tips* in environments such as VS Code.
 
-        Usage:
-        ------
+        Usage
+        -----
         .. code-block:: python
 
             # 1. Factory definition (e.g. PrimaryButton)
@@ -251,8 +240,8 @@ class FluvelLayout:
                     means the widget will grow proportionally more.
         :type stretch: int
 
-        Usage:
-        ------
+        Usage
+        -----
         .. code-block:: python
         
             with self.Vertical() as v:
@@ -270,53 +259,3 @@ class FluvelLayout:
             container = prefab_component
 
         self.add_widget(container, alignment, stretch)
-
-
-    def Label(self, **kwargs: Unpack[FLabelKwargs]) -> FLabel:
-        """
-        Creates and adds a Label widget to the layout.
-    
-        This method creates a new instance of :py:class:`~fluvel.components.widgets.FLabel`
-        based on the key arguments provided.
-    
-        :param text: The text to display on the label. Can be a string or a list
-                     for i18n lookup.
-        :type text: str | Stringvar | list[str]
-        :param style: A string of space-separated QSS class names to apply to the label.
-        :type style: str
-        :param content_align: The alignment of the label's text.
-        :type content_align: str
-        
-        .. seealso::
-            :py:class:`~fluvel.components.widgets.FLabel` for all available parameters
-            and signals.
-
-        :returns: The created :class:`~fluvel.components.widgets.FLabel` instance.
-        :rtype: FLabel
-    
-        Example
-        -------
-        .. code-block:: python
-            ...
-            with self.Vertical() as v:
-                # Creates a new label
-                my_label = v.Label(text="Hello!", style="text-2xl font-bold")
-        """
-        
-        return self._create_widget(FLabel, **kwargs)
-
-    def Button(self, **kwargs: Unpack[FButtonKwargs]) -> FButton:
-        
-        return self._create_widget(FButton, **kwargs)
-
-    def Input(self, **kwargs: Unpack[FInputKwargs]) -> FInput:
-        
-        return self._create_widget(FInput, **kwargs)
-    
-    def CheckBox(self, **kwargs: Unpack[FCheckBoxKwargs]) -> FCheckBox:
-
-        return self._create_widget(FCheckBox, **kwargs)
-    
-    def RadioButton(self, **kwargs: Unpack[FRadioButtonKwargs]) -> FRadioButton:
-        
-        return self._create_widget(FRadioButton, **kwargs)

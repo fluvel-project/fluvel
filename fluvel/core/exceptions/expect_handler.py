@@ -138,3 +138,11 @@ class expect:
         """
 
         return cls._make_handler(KeyError, **eparams)
+    
+    @classmethod
+    def IOError(cls, **eparams: Unpack[ExpectKwargs]):
+        """
+        Decorator to handle the exception :py:exc:`IOError`.
+        """
+
+        return cls._make_handler(IOError, **eparams)

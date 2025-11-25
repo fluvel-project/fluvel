@@ -1,6 +1,7 @@
 from typing import TypedDict, Unpack, Tuple, List
 
 # Fluvel
+from fluvel.core.abstract_models.FWidget import FWidget
 from fluvel.core.MenuBar import MenuBar
 from fluvel._user.GlobalConfig import AppConfig
 
@@ -16,7 +17,8 @@ from PySide6.QtWidgets import QMainWindow, QStackedWidget
 from PySide6.QtCore import Qt
 
 # Utils
-from fluvel.utils.tip_helpers import WindowFlags, WidgetAttributes, WindowStates
+from fluvel.utils.tip_helpers import WindowFlags, WindowStates
+from fluvel.core.enums.widget_attributes import WidgetAttributeTypes
 
 class AppWindowKwargs(TypedDict, total=False):
     """
@@ -36,9 +38,9 @@ class AppWindowKwargs(TypedDict, total=False):
     opacity     : float
     show_mode   : WindowStates
     flags       : List[WindowFlags]
-    attributes  : List[WidgetAttributes]
+    attributes  : List[WidgetAttributeTypes]
 
-class AppWindow(QMainWindow):
+class AppWindow(QMainWindow, FWidget):
     """
     The main window container for a Fluvel application.
 
@@ -49,8 +51,8 @@ class AppWindow(QMainWindow):
 
     The primary way to use this class is to subclass it in your project.
 
-    :ivar root: The parent :py:class:`~fluvel.core.FluvelApp.FluvelApp` instance.
-    :type root: :py:class:`~fluvel.core.FluvelApp.FluvelApp`
+    :ivar root: The parent :py:class:`~fluvel.core.App.App` instance.
+    :type root: :py:class:`~fluvel.core.App.App`
 
     **Example of Subclassing:**
 
@@ -67,15 +69,6 @@ class AppWindow(QMainWindow):
                 \"\"\"
                 # Configure window properties
                 self.configure(title="My First Fluvel App", size=[1024, 768])
-
-                # Configure menu bar actions
-                if self.menu_bar:
-                    self.menu_bar.config(
-                        on_triggered=[
-                            ("quit", self.close),
-                            ("about", lambda: Router.show("about_page"))
-                        ]
-                    )
     """
 
     _FLAGS = {
@@ -88,15 +81,6 @@ class AppWindow(QMainWindow):
         "minimize-button": "WindowMinimizeButtonHint",
         "close-button": "WindowCloseButtonHint",
         "click-through": "WindowTransparentForInput",
-    }
-
-    _ATTRIBUTES = {
-        "enable-hover": "WA_Hover",
-        "opaque-paint-event": "WA_OpaquePaintEvent",
-        "no-system-background": "WA_NoSystemBackground",
-        "delete-on-close": "WA_DeleteOnClose",
-        "styled-background": "WA_StyledBackground",
-        "translucent-background": "WA_TranslucentBackground"
     }
 
     _MAPPING_METHODS = {
@@ -115,28 +99,31 @@ class AppWindow(QMainWindow):
         "show_mode": "setWindowState",
     }
 
-    def __init__(self, root) -> None:
+    def __init__(self) -> None:
         """
         Initializes the AppWindow.
 
         It configures the window based on settings from ``AppConfig.window``, 
         initializes the core UI components, and calls the user's :py:meth:`init_ui` hook.
 
-        :param root: The parent application instance (the :py:class:`~fluvel.core.FluvelApp.FluvelApp`).
-        :type root: :py:class:`~fluvel.core.FluvelApp.FluvelApp`
+        :param root: The parent application instance (the :py:class:`~fluvel.core.App.App`).
+        :type root: :py:class:`~fluvel.core.App.App`
 
         :rtype: None
         """
         super().__init__()
 
-        # Saving the app instance of the FluvelApp
-        self.root = root
+        self._set_defaults()
 
         # Se configura con las especificaciones del archivo .toml
         self.configure(**vars(AppConfig.window))
 
         # Se inicializa y muestra UI
         self._init_core_ui()
+    
+    def _set_defaults(self) -> None:
+
+        super()._fwidget_defaults()
 
     def configure(self, **kwargs: Unpack[AppWindowKwargs]) -> None:
         """
@@ -188,6 +175,8 @@ class AppWindow(QMainWindow):
         :rtype: None
         """
 
+        kwargs = super().configure(**kwargs)
+
         if "resizable" in kwargs:
             if not kwargs["resizable"]:
                 kwargs["resizable"] = (self.width(), self.height())
@@ -197,17 +186,11 @@ class AppWindow(QMainWindow):
         if flags := kwargs.get("flags"):
             previous_flag = Qt.WindowType.Window
             for flag in flags:
-                previous_flag = previous_flag | getattr(Qt.WindowType, self._FLAGS[flag])
+                previous_flag |= getattr(Qt.WindowType, self._FLAGS[flag])
             kwargs["flags"] = previous_flag
         
         if mode := kwargs.get("show_mode"):
             kwargs["show_mode"] = getattr(Qt.WindowState, f"Window{mode}")
-
-        if attributes := kwargs.get("attributes"):
-            for attr in attributes:
-                attribute = getattr(Qt.WidgetAttribute, self._ATTRIBUTES[attr])
-                self.setAttribute(attribute, True)
-            kwargs.pop("attributes")
 
         configure_process(self, self._MAPPING_METHODS, **kwargs)
 
@@ -265,7 +248,7 @@ class AppWindow(QMainWindow):
         """
         Refreshes the entire UI during a hot-reload event.
 
-        This method is called by the :py:class:`HReloader` to destroy and recreate
+        This method is called by the :py:class:`~fluvel.cli.reloader.HReloader` to destroy and recreate
         UI components, ensuring that code changes are reflected visually.
 
         .. warning::
@@ -288,3 +271,97 @@ class AppWindow(QMainWindow):
         """
         self.central_widget = QStackedWidget()
         self.setCentralWidget(self.central_widget)
+
+    def normalize(self) -> None:
+        """
+        Resets the window to its normal desktop state (with window decorations)
+        and disables any special PySide6 attributes that may have been applied
+        (e.g., frameless, always-on-top, translucent background).
+
+        .. note:: The geometry (size and position) is not reset so as not to lose the position
+            and size that has been adjusted.
+        
+        :rtype: None
+        """
+
+        self.configure(
+            opacity=1.0,
+            flags=[
+                "title",
+                "sys-menu",
+                "minimize-button",
+                "maximize-button",
+                "close-button"                
+            ]
+        )
+        
+        # RESETEAR ATRIBUTOS
+        
+        # Iterar sobre todos los atributos conocidos y desactivarlos
+        for attr_key in self._ATTRIBUTES.values():
+            qt_attr = getattr(Qt.WidgetAttribute, attr_key)
+            self.setAttribute(qt_attr, False)
+
+        # para que la ventana se vea normal si estaba maximizada, etc.
+        self.setWindowState(Qt.WindowState.WindowNoState)
+
+        self.show()
+
+    def frameless(self) -> None:
+        """
+        Applies a clean, frameless window style, removing standard title bars
+        and decorations, and enables a translucent background.
+
+        This is commonly used for custom UI designs where the application draws
+        its own title bar or needs irregular shapes.
+        
+        :rtype: None
+        """
+
+        # Configura la ventana como sin marco y activa el fondo translúcido.
+        self.configure(
+            flags=["frameless"],
+            attributes=["translucent-background"]
+        )
+
+        self.show()
+
+    def minimize(self) -> None:
+        """
+        Minimizes the window, hiding it and typically placing an icon
+        in the system's taskbar or dock.
+
+        :rtype: None
+        """
+
+        self.showMinimized()
+
+    def maximize(self) -> None:
+        """
+        Toggles the window state between maximized and normal (restored) state.
+
+        If the window is currently maximized, it is restored to its normal size
+        and position; otherwise, it is maximized.
+
+        :rtype: None
+        """
+
+        if self.isMaximized():
+            self.showNormal()
+        else:
+            self.showMaximized()
+
+    def fullscreen(self) -> None:
+        """
+        Toggles the window state between fullscreen and normal (restored) state.
+
+        If the window is currently fullscreen, it is restored to its normal size
+        and position; otherwise, it is fullscreen.
+
+        :rtype: None
+        """
+
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()

@@ -1,7 +1,7 @@
 class ContentNotFoundError(Exception):
     """
-    Excepción que se lanza cuando se intenta acceder a un contenido
-    de la clase GlobalContent con un id erróneo o inexistente.
+    Exception that is thrown when attempting to access content
+    of the GlobalContent class with an incorrect or non-existent id.
     """
 
     def __init__(self, *args):
@@ -9,8 +9,7 @@ class ContentNotFoundError(Exception):
 
 class ContentLoadingError(Exception):
     """
-    Excepción que se lanza cuando se intenta
-    cargar los archivos .json a través del ContentHandler
+    Exception thrown when attempting to load .json files via ContentHandler
     """
     def __init__(self, *args):
         super().__init__(*args)

@@ -7,12 +7,14 @@ from fluvel.controllers.main_controller import init_content
 from fluvel._user.GlobalConfig import AppConfig
 from fluvel.core.Router import Router
 from fluvel.controllers.ContentHandler import ContentHandler
+from fluvel.core.tools.core_process import configure_process
 
 # Utils
 from fluvel.utils.paths import PAGES_DIR
 
 # PySide6
 from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 
 # Exception Handler
 from fluvel.core.exceptions.expect_handler import expect
@@ -22,7 +24,17 @@ class AppRegisterKwargs(TypedDict, total=False):
     pages           : Optional[List[str]]
     show_animation  : str
 
-class FluvelApp:
+class AppKwargs(TypedDict, total=False):
+
+    name                : str
+    display_name        : str
+    version             : str
+    organization        : str
+    domain              : str
+    icon                : str
+    desktop_file_name   : str
+
+class App:
     """
     The main entry point and controller for a Fluvel application.
 
@@ -35,31 +47,38 @@ class FluvelApp:
     :type window_class: Type[AppWindow]
     
     :param config_file: The path to the main application configuration file.
-                        Defaults to "appconfig.toml".
+                        Defaults to "config.toml".
     :type config_file: str, optional
 
     Example
     -------
     .. code-block:: python
 
-       # In your main.py
-       from fluvel import FluvelApp
-       from window import MainWindow
+       # In your app.py
+       from fluvel import App
 
-       app = FluvelApp(MainWindow)
-       app.register(initial="home", pages=["pages.home.Homepage"])
+       app = App()
+       app.register(initial="home")
        
        if __name__ == "__main__":
            app.run()
     """
+
+    _MAPPING_METHODS = {
+        "name"              : "setApplicationName",
+        "display_name"      : "setApplicationDisplayName",
+        "version"           : "setApplicationVersion",
+        "organization"      : "setOrganizationName",
+        "domain"            : "setOrganizationDomain",
+        "icon"              : "setWindowIcon",
+        "desktop_file_name" : "setDesktopFileName",
+    }
 
     def __init__(self, window_module_path: Optional[str] = None, config_file: str = "config.toml") -> None:
         
         # The instance of QApplication
         self._app = QApplication()
 
-        self._app.setDesktopFileName("FluvelApp")
-        
         # Start initial config
         self._load(config_file)
 
@@ -67,7 +86,45 @@ class FluvelApp:
         self.main_window = self._create_main_window(window_module_path)
 
         # Start router config
-        Router.init(self.main_window)
+        Router.init(self, self.main_window)
+
+        self.configure(**vars(AppConfig.app))
+
+    def configure(self, **kwargs: Unpack[AppKwargs]) -> None:
+        """
+        Applies the global application settings (metadata) to the QApplication instance.
+
+        This method is the **central control point** for applying the application identity,
+        whether the values come from the **external configuration file** ``config.toml``
+        or directly from arguments passed in the **Python code**.
+        
+        Initializes Qt identity setters, such as the application name, organization,
+        domain, and icon. Uses the internal mapping :py:attr:`~fluvel.App._MAPPING_METHODS`
+        to dynamically call methods of the :py:class:`~PySide6.QtWidgets.QApplication`.
+        
+        :param name: The internal name of the application (:py:meth:`~PySide6.QtWidgets.QApplication.setApplicationName`).
+        :type name: str
+        :param display_name: The user-readable name (:py:meth:`~PySide6.QtWidgets.QApplication.setApplicationDisplayName`).
+        :type display_name: str
+        :param version: The version of the application (:py:meth:`~PySide6.QtWidgets.QApplication.setApplicationVersion`).
+        :type version: str
+        :param organization: The name of the organization (:py:meth:`~PySide6.QtWidgets.QApplication.setOrganizationName`).
+        :type organization: str
+        :param domain: The domain of the organization (:py:meth:`~PySide6.QtWidgets.QApplication.setOrganizationDomain`).
+        :type domain: str
+        :param icon: The path to the global icon file. Converted to :py:class:`~PySide6.QtGui.QIcon`.
+        :type icon: str
+        :param desktop_file_name: The identifier for the operating system launcher (:py:meth:`~PySide6.QtWidgets.QApplication.setDesktopFileName`).
+        :type desktop_file_name: str
+        
+        :rtype: None
+        """
+
+        if icon_path := kwargs.get("icon"):
+
+            kwargs["icon"] = QIcon(icon_path)
+
+        configure_process(self._app, self._MAPPING_METHODS, **kwargs)
 
     def _load(self, filename: str) -> None:
         """
@@ -154,9 +211,9 @@ class FluvelApp:
         # Importando los módulos
         for module_path in page_modules:
             importlib.import_module(module_path)
-
+            
         # Show initial view
-        Router.show(initial_view, animation=animation)
+        Router.show(initial_view, animation)
 
     def _create_main_window(self, window_module_path: Optional[str]):
         """
@@ -184,7 +241,7 @@ class FluvelApp:
         window_module = importlib.import_module(window_module_path)
 
         # Return an instance of MainWindow(AppWindow)
-        return window_module.MainWindow(self)
+        return window_module.MainWindow()
    
     def _set_static_content(self) -> None:
         """

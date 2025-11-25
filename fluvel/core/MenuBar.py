@@ -1,9 +1,8 @@
 # fluvel.core.MenuBar
-from typing import Callable, Any, Tuple, List, Optional, Literal, TypedDict, Dict, Unpack
-from functools import partial
+from typing import Callable, Any, TypedDict, Dict, Unpack
 
 # Fluvel
-from fluvel.core.abstract_models.FluvelWidget import FluvelWidget
+from fluvel.core.abstract_models.FWidget import FWidget
 from fluvel.components.gui.FAction import FAction
 from fluvel.components.widgets.FMenu import FMenu
 from fluvel._user.GlobalConfig import AppConfig
@@ -19,18 +18,18 @@ from fluvel.utils.tip_helpers import ActionProperties, ActionSignalTypes, Standa
 
 ACTION_SIGNALS = ["hovered", "triggered", "changed", "toggled"]
 
-class MenuBarProperties(TypedDict):
+class ActionProperties(TypedDict):
 
     # ActionProperties
-    Text            : str
-    Icon            : QIcon
-    Shortcut        : StandardActionShortcut
-    StatusTip       : str
-    Enabled         : bool
-    Visible         : bool
-    Checkable       : bool
-    MenuRole        : FAction.MenuRole
-    Data            : Any
+    text            : str
+    icon            : QIcon
+    shortcut        : StandardActionShortcut
+    statusTip       : str
+    enabled         : bool
+    visible         : bool
+    checkable       : bool
+    menuRole        : FAction.MenuRole
+    data            : Any
 
     # Signals
     triggered       : Callable
@@ -40,11 +39,10 @@ class MenuBarProperties(TypedDict):
 
 class MenuBarKwargs(TypedDict, total=False):
 
-    structure   : Dict
-    style       : str
-    controls    : Dict[MenuOptions, MenuBarProperties]
+    style           : str
+    controls        : Dict[MenuOptions, ActionProperties]
 
-class MenuBar(QMenuBar, FluvelWidget):
+class MenuBar(QMenuBar, FWidget):
     """
     A high-level wrapper around :py:class:`PySide6.QtWidgets.QMenuBar` for Fluvel applications.
 
@@ -56,21 +54,22 @@ class MenuBar(QMenuBar, FluvelWidget):
     by :py:class:`~fluvel.components.widgets.FMenu` based on content files.
     """
 
-    def __init__(self, **kwargs: Unpack[MenuBarKwargs]):
+    def __init__(self, *, structure: Dict, **kwargs: Unpack[MenuBarKwargs]):
         """
         Initializes the MenuBar and builds its structure.
 
         :param parent: The parent window, typically an :py:class:`~fluvel.core.AppWindow` instance.
         :type parent: :py:class:`PySide6.QtWidgets.QWidget`
+        
         :param structure: A dictionary representing the hierarchical structure of the menu 
                           (loaded from a configuration file).
         :type structure: dict
         """
         super().__init__()
 
-        self._set_widget_defaults()
+        self._fwidget_defaults()
 
-        self.menu = FMenu(parent=self, menu_structure=kwargs.get("structure"))
+        self.menu = FMenu(parent=self, menu_structure=structure)
 
         self.configure(**kwargs)
         
@@ -86,6 +85,7 @@ class MenuBar(QMenuBar, FluvelWidget):
 
         :param item_name: The name of the menu item (action or submenu) to retrieve.
         :type item_name: :py:class:`~fluvel._user.MenuOptions`
+
         :returns: The corresponding :py:class:`~fluvel.components.gui.FAction` or :py:class:`~fluvel.components.widgets.FMenu` object.
         :rtype: :py:class:`~fluvel.components.gui.FAction` or :py:class:`~fluvel.components.widgets.FMenu`
         """
@@ -137,7 +137,7 @@ class MenuBar(QMenuBar, FluvelWidget):
 
         :rtype: None
         """
-        property_method = f"set{property_to_change}"
+        property_method = f"set{property_to_change.capitalize()}"
         menu_item = self.get_item(menu_option)
         getattr(menu_item, property_method)(new_value)
   
@@ -176,15 +176,15 @@ class MenuBar(QMenuBar, FluvelWidget):
             menu_bar.configure(
                 controls={
                     "file_open": {
-                        "Text": "Open...",
-                        "Shortcut": "Ctrl+O",
-                        "StatusTip": "Open a new file",
+                        "text": "Open...",
+                        "shortcut": "Ctrl+O",
+                        "statusTip": "Open a new file",
                         "triggered": on_open_file
                     },
                     "file_exit": {
-                        "Text": "Exit",
-                        "Shortcut": "Ctrl+Q",
-                        "StatusTip": "Exit the application",
+                        "text": "Exit",
+                        "shortcut": "Ctrl+Q",
+                        "statusTip": "Exit the application",
                         "triggered": on_exit_app
                     }
                 },
@@ -192,9 +192,9 @@ class MenuBar(QMenuBar, FluvelWidget):
             )
         """
 
-        kwargs = self._apply_styles(**kwargs)
+        kwargs = super().configure(**kwargs)
 
-        if controls:=kwargs.get("controls"):
+        if controls := kwargs.get("controls"):
             for action, properties in controls.items():
                 for prop_name, value in properties.items():
                     if prop_name in ACTION_SIGNALS:
