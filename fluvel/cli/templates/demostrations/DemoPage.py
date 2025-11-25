@@ -1,5 +1,4 @@
 from fluvel import route, Page
-from fluvel.components import FButton
 
 @route("/demo-widgets")
 class Demo(Page):
@@ -11,7 +10,7 @@ class Demo(Page):
 
             hbody.Label(text="Buttons", style="text-2xl", alignment="left")
 
-            with self.Grid(hbody) as grid:
+            with hbody.Grid() as grid:
 
                 buttons = (
                     "primary",
@@ -31,12 +30,12 @@ class Demo(Page):
 
                     column = grid.Column(i)
 
-                    column.add(FButton(text=normal, style=button))
-                    column.add(FButton(text=outlined, style=f"{button}-outlined"))
+                    column.Button(text=normal, style=button)
+                    column.Button(text=outlined, style=f"{button}-outlined")
 
             hbody.Label(text="Labels", style="text-2xl", alignment="left")
 
-            with self.Horizontal(hbody) as h1:
+            with hbody.Horizontal() as h1:
 
                 h1.Label(text="Info", style="info")
                 h1.Label(text="Success", style="success")

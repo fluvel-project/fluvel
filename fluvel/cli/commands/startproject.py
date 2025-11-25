@@ -9,19 +9,21 @@ Proposed architecture generated:
 
 root:
 ├───assets                  # Binary resources (images, fonts, etc.)
-├───static  
+├───static                  # Specialized directory for themes and languages
 │   ├───content             # Fluml and i18n content files
 │   │   └───en              # (Example) Language files for English
-│   └───themes              # QSS stylesheets (.qss)
-│       └───bootstrap       # Initial theme (e.g., compact-bootstrap.qss)
+│   └───themes              # Directories for QSS styles/themes
+│       └───bootstrap/      # Initial theme (e.g., fluvel-bootstrap.min.qss)
 ├───ui                      # UI source code
-│   ├───components          # Simple, reusable widgets @Factory.compose
+│   ├───components          # Simple, reusable widgets @Component
 │   ├───prefabs             # Complex components decorated with @Prefab
 │   └───pages               # Main application pages       
-│       └───home            # Dedicated directory for the composition of the home page
-|           └───HomePage.py # Example page (Home) 
-│   appconfig.toml          # Global application configuration file
-│   main.py                 # Application entry point
+│       └───home/           # Dedicated directory for the composition of the home page
+│           ├───components  # (Optional) Dedicated directory for specific home/ components
+│           ├───prefabs     # (Optional) Dedicated directory for specific home/ prefabs
+│           └───homepage.py # Example page (Home) 
+│   config.toml             # Global application configuration file
+│   app.py                  # Application entry point
 │   window.py               # Custom AppWindow(QMainWindow) class
 """
 
@@ -32,9 +34,11 @@ import click
 # Fluvel CLI/Utils Paths
 from fluvel.cli.paths import PROJECT_ROOT, MAINPY_ROOT
 from fluvel.cli.templates import MAINPY_TEMPLATE, WELCOME_VIEW, WINDOW_TEMPLATE, APPCONFIG_TEMPLATE, HOME_GREETING, COMPACT_BOOTSTRAP
+from fluvel.cli.tools.ClickStyledMessage import echo, ClickStyledMessage
 
 # Folders
 from fluvel.utils.paths import CONTENT_DIR, THEMES_DIR, PAGES_DIR, STATIC_DIR, UI_DIR
+
 
 FOLDERS: List[Path] = [
     STATIC_DIR,
@@ -51,11 +55,11 @@ FOLDERS: List[Path] = [
 
 FILE_TEMPLATES: List[Tuple[Path, str]] = [
     (MAINPY_ROOT, MAINPY_TEMPLATE),
-    (PAGES_DIR / "home" / "HomePage.py", WELCOME_VIEW),
+    (PAGES_DIR / "home" / "homepage.py", WELCOME_VIEW),
     (PROJECT_ROOT / "window.py", WINDOW_TEMPLATE),
     (PROJECT_ROOT / "config.toml", APPCONFIG_TEMPLATE),
     (CONTENT_DIR / "en" / "homepage.fluml", HOME_GREETING),
-    (THEMES_DIR / "bootstrap" / "compact-bootstrap.qss", COMPACT_BOOTSTRAP),
+    (THEMES_DIR / "bootstrap" / "fluvel-bootstrap.min.qss", COMPACT_BOOTSTRAP),
 ]
 
 def create_project_structure() -> None:
@@ -93,44 +97,51 @@ def display_welcome_message() -> None:
     project_path = PROJECT_ROOT.resolve()
     TREE_STRUCTURE = """root:
 ├───assets                  # Binary resources (images, fonts, etc.)
-├───static  
+├───static                  # Specialized directory for themes and languages
 │   ├───content             # Fluml and i18n content files
 │   │   └───en              # (Example) Language files for English
-│   └───themes              # QSS stylesheets (.qss)
-│       └───bootstrap       # Initial theme (e.g., compact-bootstrap.qss)
+│   └───themes              # Directories for QSS styles/themes
+│       └───bootstrap/      # Initial theme (e.g., fluvel-bootstrap.min.qss)
 ├───ui                      # UI source code
-│   ├───components          # Simple, reusable widgets @Factory.compose
+│   ├───components          # Simple, reusable widgets @Component
 │   ├───prefabs             # Complex components decorated with @Prefab
 │   └───pages               # Main application pages       
-│       └───home            # Dedicated directory for the composition of the home page
+│       └───home/           # Dedicated directory for the composition of the home page
+│           ├───components  # (Optional) Dedicated directory for specific home/ components
+│           ├───prefabs     # (Optional) Dedicated directory for specific home/ prefabs
 │           └───homepage.py # Example page (Home) 
-│   appconfig.toml          # Global application configuration file
-│   main.py                 # Application entry point
+│   config.toml             # Global application configuration file
+│   app.py                  # Application entry point
 │   window.py               # Custom AppWindow(QMainWindow) class
 """
 
     # Mensaje Final Estilizado
 
-    proj_path = click.style(project_path, fg="bright_blue")
-    
-    click.echo(click.style(f"\nWelcome to Fluvel Framework (v0.1.2b1)", fg='bright_yellow',))
-    click.echo(f"{"="*38}")
-    click.echo(click.style(f"\nApp successfully created in: {proj_path}", fg='bright_green'))
+    echo("\n:bright_yellow[Welcome to Fluvel Framework (v0.1.2b1)]")
+    click.echo("="*38)
+    echo(f":bright_green[App succesfully created in:] :blue[{project_path}]")
 
-    url = click.style("https://github.com/Robotid/Fluvel.", fg="bright_blue")
-    click.echo(click.style(f"You can consult the documentation and tutorials at {url}", fg="bright_green"))
+    echo(
+        ":bright_green[You can consult the documentation and tutorials at] "\
+        ":blue[https://github.com/Robotid/Fluvel]"
+    )
 
-    # Estructura del Proyecto (Con color para destacar rutas)
-    click.echo(click.style("\nStructure of Fluvel Architecture:", bold=True, fg='yellow'))
-    click.echo(click.style("--------------------------------------", fg='yellow'))
     
-    # Imprimir el árbol de estructura con colores: 
-    # Usaremos 'blue' para directorios lógicos y 'white' para comentarios/archivos.
-    styled_tree = TREE_STRUCTURE.replace("├───", click.style("├───", fg='blue'))
-    styled_tree = styled_tree.replace("└───", click.style("└───", fg='blue'))
-    styled_tree = styled_tree.replace("│", click.style("│", fg='blue'))
-    styled_tree = styled_tree.replace("root:", click.style("root:", fg='blue', bold=True))
+    # Project Structure (With color to highlight routes)
+    echo("\n:yellow[Fluvel Architecture:]")
+    click.echo(click.style("-"*20, fg='yellow'))
     
+    
+    # Print the structure tree with colors
+    # We will use 'blue' for logical directories
+    replacements = [
+        ("root:", "blue", True),
+        ("├───", "blue", False),
+        ("└───", "blue", False),
+        ("│", "blue", False)
+    ]
+    styled_tree = ClickStyledMessage.replace_with_style(TREE_STRUCTURE, replacements)
+
     click.echo(styled_tree)
 
 @click.command

@@ -1,4 +1,6 @@
-import click, re
+import click
+import re
+from typing import List, Tuple
 
 class ClickStyledMessage:
     """
@@ -9,7 +11,7 @@ class ClickStyledMessage:
     The markup syntax uses the pattern ``:color_name[text]``, 
     where ``color_name`` is a color supported by Click.
 
-    :cvar regex: The compiled regular expression used to find 
+    :ivar regex: The compiled regular expression used to find 
                  and replace the style pattern in the message.
     :vartype regex: str
     """
@@ -35,8 +37,8 @@ class ClickStyledMessage:
     @classmethod
     def echo(cls, message: str) -> None:
         """
-        Prints a message and a new line to standard output or a file, 
-        applying Click styles for the foreground colors defined 
+        Prints a message and a new line to standard output or a file,
+        applying Click styles for the foreground colors defined
         in the message using the syntax ``:color_name[text]``.
 
         The supported color names are the same as those in :func:`click.style`:
@@ -61,16 +63,86 @@ class ClickStyledMessage:
 
         :param message: The message to print, potentially containing style markers.
         :type message: str
+
         :returns: Nothing (prints directly to standard output).
         :rtype: None
+        """
 
+        full_message = re.sub(cls.regex, cls._style_replacer, message)
+        click.echo(full_message)
+
+    @classmethod
+    def replace_with_style(
+        cls, 
+        text: str, 
+        replacements: List[Tuple[str, str, bool]]
+    ) -> str:
+        """
+        Applies Click styles to specific substrings within a larger text block 
+        (like an ASCII tree structure).
+
+        This is highly useful for applying consistent styling to fixed characters
+        (like tree lines: ├───, └───, │) without relying on complex regex.
+
+        :param text: The original text block.
+        :type text: str
+        :param replacements: A list of tuples, where each tuple contains:
+                             (original_substring, click_color_name, bold_status)
+        :type replacements: List[Tuple[str, str, bool]]
+        :returns: The modified text with styles applied.
+        :rtype: str
+        
         Example
         -------
         .. code-block:: python
 
-            ClickStyledMessage.echo(“This is normal, :red[this is red] and :green[this is green].”)
+            tree_text = "root:\n├──A\n└──B"
+            styled_text = ClickStyledMessage.replace_substring_style(
+                tree_text,
+                [
+                    ("├──", "blue", False),
+                    ("root:", "blue", True)
+                ]
+            )
         """
+        for original, color, bold in replacements:
+            
+            # Replace the original substring with the stylized version of click.
+            styled_replacement = click.style(original, fg=color, bold=bold)
+            text = text.replace(original, styled_replacement)
+            
+        return text
 
-        full_message = re.sub(cls.regex, cls._style_replacer, message)
-    
-        click.echo(full_message)
+def echo(msg: str) -> None:
+    """
+    Convenience function that calls ClickStyledMessage.echo()
+    to print a message with inline style markup.
+
+    The supported color names are the same as those in :func:`click.style`:
+
+    * ``black`` (might be a gray)
+    * ``red``
+    * ``green``
+    * ``yellow`` (might be an orange)
+    * ``blue``
+    * ``magenta``
+    * ``cyan``
+    * ``white`` (might be light gray)
+    * ``bright_black``
+    * ``bright_red``
+    * ``bright_green``
+    * ``bright_yellow``
+    * ``bright_blue``
+    * ``bright_magenta``
+    * ``bright_cyan``
+    * ``bright_white``
+    * ``reset`` (only resets the color code)
+
+    :param msg: The message to print, potentially containing style markers 
+                (e.g., ":red[Error]").
+    :type msg: str
+    :returns: None
+    :rtype: None
+    """
+
+    ClickStyledMessage.echo(msg)

@@ -1,7 +1,7 @@
-MAINPY_TEMPLATE = """from fluvel import FluvelApp
+MAINPY_TEMPLATE = """from fluvel import App
 
 # App
-app = FluvelApp()
+app = App()
 
 app.register(initial="home")
 
