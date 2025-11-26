@@ -2,60 +2,92 @@ import functools
 from typing import TypeVar, Callable, Any
 
 # Fluvel
-from fluvel.core.abstract_models.ABCAbstractPage import Page
+from fluvel.components.widgets.FContainer import FContainer
+from fluvel.core.abstract_models.LayoutBuilder import LayoutBuilder
+
+class Canvas(FContainer, LayoutBuilder):
+    """
+    It represents the drawing area or base container for building composite or custom UI components.
+
+    Canvas inherits the following functionalities:
+
+    * :py:class:`~fluvel.components.widgets.FContainer`: To act as a widget container.
+    * :py:class:`~fluvel.core.abstract_models.LayoutBuilder`: To provide layout management methods (Vertical, Horizontal, Label, etc.)
+
+    This class is the primary argument of functions decorated with :py:func:`~fluvel.composer.Prefab`.    
+    """
+    pass
 
 TFunc = TypeVar('TFunc', bound=Callable[..., Any])
 
 def Prefab(func: TFunc) -> TFunc:
     """
-    This pattern encapsulates the design logic and composition of widgets 
-    within a function to create a reusable (prefabricated) Complex Component.
+    A decorator that turns a Python function into a **reusable UI component (a "Prefab")**.
 
-    The decorated function should have the following signature:
-    `def ComponentName(view: View, **kwargs) -> View:`
+    This pattern encapsulates layout logic and widget 
+    composition within a function to create a *complex component* 
+    that can be easily included in any other layout.
+
+    The decorated function automatically receives an instance of `~fluvel.composer.Canvas` 
+    as its first argument (although this isn't required when calling it, as the decorator provides it) 
+    and should return the modified instance of `~fluvel.composer.Canvas`.
+
+    The signature of the decorated function should be:
+    `def ComponentName(canvas: Canvas, **kwargs) -> Canvas:`
 
     :param func: The function that defines the component's layout and widgets.
-    :type func: TFunc
-    :returns: The decorated function (`decorator`), which, when called, executes
-              the component's logic and returns a constructed `View` ready to be
-              added to another layout.
-    :rtype: TFunc
+    :type func: :py:data:`~fluvel.composer.TFunc`
 
-    Example:
-    --------
-    .. code-block:: python
+    :returns: The decorated function (:code:`decorator`), which, when called, executes
+              the component's logic and returns a constructed :py:class:`~fluvel.composer.Canvas`,
+              ready to be added to another layout.
+    :rtype: :py:data:`~fluvel.composer.TFunc`
 
-        from fluvel import View
-        from fluvel.composer import Prefab
+    .. warning::
+        The decorated function **MUST** return the :py:class:`~fluvel.composer.Canvas` object
+        at the end of its execution so that it can be correctly embedded in the
+        parent layout.
 
-        @Prefab
-        def Note(view: View, message: str | list):
+    Example 
+    ------- 
+        .. code-block:: python 
 
-            with view.Vertical() as v:
+            from fluvel import Page, route 
+            from fluvel.composer import Prefab, Canvas 
+
+            @Prefab 
+            def Note(canvas: Canvas, message: str | list): 
             
-                v.Label(text="Note", style="font-bold")
-        
-                v.Label(text=message, word_wrap=True)
+                # Defines a component with a title and a message 
+                with canvas.Vertical(style="border-1 border-gray-300 p-4") as v: 
 
-            return view # ¡IMPORTANT!
+                    v.Label(text="Note", style="font-bold text-lg") 
 
-        # In your views
+                    v.Label(text=message, word_wrap=True) 
 
-        class ExampleView(View):
+                return canvas # IMPORTANT! Return the modified Canvas
 
-            def build_ui(self):
+            # In your pages (or any other LayoutBuilder)
+            @route("example")
+            class ExamplePage(Page):
+            
+                def build_ui(self):
                 
-                with self.Vertical() as vbody:
-                
-                    vbody.Prefab(Note(message="some message"))
+                    with self.Vertical(spacing=10) as v:
+
+                        v.Label(text="My Application")
+
+                        # Direct call to the Prefab function as if it were a widget
+                        v.Prefab(Note(message="This is a reusable notification component."))
+
+                        v.Label(text="End of content.")
     """
 
     @functools.wraps(func)
     def decorator(*args, **kwargs):
         
-        # View with blank_container
-        view = Page() 
+        canvas = Canvas()
         
-        return func(view, *args, **kwargs)
+        return func(canvas, *args, **kwargs)
         
     return decorator

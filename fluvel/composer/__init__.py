@@ -1,14 +1,10 @@
-from fluvel.composer.Factory import Factory
+from fluvel.composer.Factory import Component
 from fluvel.composer.Animator import Animator
-from fluvel.composer.Prefab import Prefab
+from fluvel.composer.Prefab import Prefab, Canvas
 
 __all__ = [
-    "Factory",
+    "Component",
     "Animator",
-    "Prefab"
+    "Prefab",
+    "Canvas"
 ]
-
-from typing import TypeAlias
-from fluvel.core.abstract_models.ABCAbstractPage import Page
-
-Canvas: TypeAlias = Page

@@ -1,32 +1,35 @@
 import importlib, functools
-from typing import Type
+from typing import Type, TypeVar
 from PySide6.QtWidgets import QWidget
+
+TWidget = TypeVar(name="TWidget", bound=QWidget)
 
 # Tip-helpers
 from fluvel.utils.tip_helpers import AllWidgetsTypes
 
+
 class Factory:
     """
-    Manages the creation of reusable, customized QWidget components.
+    Manages the creation of reusable, customized TWidget components.
 
     This class provides a decorator-based system to define new, pre-configured
-    component types from base Fluvel widgets.
+    component types from base SKWidgets.
 
     :cvar _stock: A cache dictionary to store imported widget classes.
-    :type _stock: dict[str, Type[QWidget]]
+    :type _stock: dict[str, Type[TWidget]]
     """
 
-    _stock: dict[str, Type[QWidget]] = {}
+    _stock: dict[str, Type[TWidget]] = {}
 
     class Target:
         """
         An internal helper class to manage the dynamic import of widgets.
 
         This class handles the logic for dynamic importing and caching of
-        QWidget classes, ensuring that each widget module is loaded only once.
+        TWidget classes, ensuring that each widget module is loaded only once.
 
-        :ivar WidgetClass: The imported QWidget class.
-        :type WidgetClass: Type[QWidget]
+        :ivar WidgetClass: The imported TWidget class.
+        :type WidgetClass: Type[TWidget]
         """
         
         def __init__(self, widget_target: str):
@@ -45,58 +48,56 @@ class Factory:
 
             self.WidgetClass = Factory._stock[widget_target]
             
-    @classmethod
-    def compose(cls, target: AllWidgetsTypes):
-        """
-        A decorator that turns a configuration function into a component factory.
+def Component(target: AllWidgetsTypes):
+    """
+    A decorator that turns a configuration function into a component factory.
 
-        This method wraps a function that returns a configuration dictionary.
-        The decorated function becomes a new component that, when called, creates
-        an instance of the target widget with the specified configuration.
+    The decorated function becomes a new component that, when called, creates
+    an instance of the target widget with the specified configuration.
 
-        :param target: The class name of the base widget to create (e.g., "FButton").
-        :type target: str
-        :returns: A decorator that produces a QWidget component factory.
-        :rtype: callable
+    :param target: The class name of the base widget to create (e.g., "FButton").
+    :type target: str
+    :returns: A decorator that produces a TWidget component factory.
+    :rtype: callable
 
-        Example:
-        --------
-        .. code-block:: python
+    Example
+    -------
+    .. code-block:: python
 
-            # In components/custom.py
-            from fluvel.composer import Factory
+        # In components/custom.py
+        from fluvel.composer import Component
 
-            @Factory.compose(target="FButton")
-            def PrimaryButton(text: str):
-                return {
-                    "text": text,
-                    "style": "primary bold"
-                }
+        @Component("FButton")
+        def PrimaryButton(text: str):
+            return {
+                "text": text,
+                "style": "primary font-bold"
+            }
 
-            # In a View
-            from components.custom import PrimaryButton
-            ...
-            with self.Vertical() as v:
-        
-                # 1) Creates an FButton with text="Submit" and style="primary bold"
-                v.addWidget(PrimaryButton(text="Submit"))
-                
-                # 2) or create a method to speed up adding the factory component to the layout
-                v.PrimaryButton = v.from_factory(PrimaryButton)
-                v.PrimaryButton(text="Submit")
-        """
-        
-        object_target = cls.Target(target)
-
-        def decorator(func):
+        # In a View
+        from components.custom import PrimaryButton
+        ...
+        with self.Vertical() as v:
+    
+            # 1) Creates an FButton with text="Submit" and style="primary bold"
+            v.add_widget(PrimaryButton(text="Submit"))
             
-            @functools.wraps(func)
-            def component_wrapper(*args, **user_kwargs) -> QWidget:
+            # 2) or create a method to speed up adding the factory component to the layout
+            v.PrimaryButton = v.from_factory(PrimaryButton)
+            v.PrimaryButton(text="Submit")
+    """
+    
+    object_target = Factory.Target(target)
 
-                base_config = func(*args, **user_kwargs) 
+    def decorator(func):
+        
+        @functools.wraps(func)
+        def component_wrapper(*args, **user_kwargs) -> TWidget:
 
-                return object_target.WidgetClass(**base_config)
+            base_config = func(*args, **user_kwargs) 
 
-            return component_wrapper
+            return object_target.WidgetClass(**base_config)
 
-        return decorator
+        return component_wrapper
+
+    return decorator
