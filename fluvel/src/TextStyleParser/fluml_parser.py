@@ -1,47 +1,66 @@
 import re
 from collections import defaultdict
+from typing import Optional, Dict
 
+class FlumlParser:
 
-class StyledTextParser:
-    def __init__(self, text: str):
+    # Pattern to detect the start of a block: ".. id: fluml-content"
+    PATTERN = re.compile(r"^\s*\.\.\s*(?P<id>.*?):\s*(?P<content>.*)\s*$")
 
-        self.text = text
+    blocks = defaultdict(list)
 
-        self.blocks = defaultdict(list)
+    @classmethod
+    def parse(cls, text: str) -> None:
+        """
+        Analyze the content line by line.
+        If you find “.. id:”, set the current context.
+        The following lines are added to that context until another ID is found.
+        """
 
-        # Estructurar el formato de la información
-        self._parse_FLUML()
+        cls.blocks.clear()
 
-    def _parse_FLUML(self):
-        current_id = None
-        for raw_line in self.text.splitlines():
+        # Status to know who the current line belongs to
+        current_id: Optional[str] = None 
+
+        for raw_line in text.splitlines():
             clean_line = raw_line.strip()
+            
+            # Ignore empty lines or comments
             if not clean_line or clean_line.startswith("#"):
                 continue
 
-            _match = re.match(r"\[(.+?)\]:", clean_line)
+            _match = cls.PATTERN.match(raw_line)
+            
             if _match:
-                current_id = _match.group(1).strip()
-                continue
+                # It is a definition line (e.g., “.. title: Hello”)
+                current_id = _match.group("id").strip()
+                content = _match.group("content").strip()
+                
+                # If there is content on the same line as the definition, we save it.
+                if content:
+                    cls.blocks[current_id].append(content)
+            
+            elif current_id:
+                # If it is not a definition, it is a continuation of the previous text (multiline)
+                # We only save it if we already have an active ID defined
+                cls.blocks[current_id].append(clean_line)
 
-            if current_id:
-                self.blocks[current_id].append(clean_line)
-
-    def _apply_styles(self, text):
+    @classmethod
+    def _apply_styles(cls, text: str) -> str:
         """
-        Este método encuentra y traduce los patrones escritos en FLUML a la sintaxis HTML correspondiente.\n
-        *En caso de coincidir más de un patrón, se anidan las etiquetas `<span>`.*
+        This method finds and translates patterns written in FLUML to the corresponding HTML syntax.
+        *If more than one pattern matches, the `<span>` tags are nested.*
         """
 
         # LINK -> {content | href}
-        text = re.sub(r"\{(.*?)\s*\|\s*(.*?)\}", r"<a href='\2';'>\1</a>", text)
+        text = re.sub(r"\{(.*?)\s*\|\s*(.*?)\}", r"<a href='\2'>\1</a>", text)
 
         # UNDERLINE -> __content__
         text = re.sub(
             r"__([^_]+)__", r"<span style='text-decoration: underline;'>\1</span>", text
         )
 
-        # LINE-THROUG -> --content--
+        # LINE-THROUGH -> --content--
         text = re.sub(
             r"--([^-]+)--",
             r"<span style='text-decoration: line-through;'>\1</span>",
@@ -67,41 +86,64 @@ class StyledTextParser:
 
         # VERTICAL ALIGN SUPER -> <sup>content</sup>
         text = re.sub(
-            r"<sup>(.*?)</sup>", r"<span style='vertical-align: super;'>\1</span>", text
+            r"\^\^([^^]+)\^\^", r"<span style='vertical-align: super;'>\1</span>", text
         )
 
         # VERTICAL ALIGN SUB -> <sub>content</sub>
         text = re.sub(
-            r"<sub>(.*?)</sub>", r"<span style='vertical-align: sub;'>\1</span>", text
+            r"~~([^\~].*?)~~", r"<span style='vertical-align: sub;'>\1</span>", text
         )
 
         return text
 
-    def render_html(self) -> dict:
+    @classmethod
+    def render_html(cls) -> dict:
         """
-        Este método procesa cada bloque de texto,
-        aplica los estilos y devuelve el contenido renderizado a HTML.
+        This method processes each block of text,
+        applies styles, and returns the rendered content as HTML.
 
-        Returns:
-            dict: Un diccionario con los IDs (claves) referenciando
-            a su contenido HTML renderizado (valores).
+        :returns: A dictionary with IDs (keys) referencing their
+        rendered HTML content (values).
+        :rtype: dict
         """
 
         result: dict = {}
 
-        for block_id, lines in self.blocks.items():
-
-            full_text = " ".join(lines)
-
-            rendered = self._apply_styles(full_text)
-
+        for block_id, lines in cls.blocks.items():
+            # We join the lines with a space to form a continuous paragraph.
+            full_text = "\n".join(lines)
+            rendered = cls._apply_styles(full_text)
             result[block_id] = rendered
 
         return result
 
+def convert_FLUML_to_HTML(fluml_content: str) -> Dict[str, str]:
+    """
+    Processes a block of content written in the FLUML markup language,
+    extracts all static text directives, and converts them into HTML
+    with inline styles for use in PySide6/Qt widgets that
+    support Rich Text.
 
-def convert_FLUML_to_HTML(fluml_content: str) -> dict:
+    This function serves as the main interface for loading the application's
+    internationalization (i18n) content.
 
-    parser = StyledTextParser(fluml_content)
+    The process is carried out in two phases:
+    1. Parsing: :py:meth:`~FlumlParser.parse` is used to identify
+    the '..id: content' directives and group multiline text.
+    2. Rendering: :py:meth:`~FlumlParser.render_html` is used to
+    join the lines of each block (with a newline character '\\n' or a space),
+    and convert the custom markup syntax (e.g., ** bold, * italics)
+    to the corresponding HTML/CSS tags.
 
-    return parser.render_html()
+    :param fluml_content: The full text string read from a ``.fluml`` file
+                        (e.g., messages.fluml) within the active
+                        language directory.
+    :type fluml_content: str
+
+    :returns: A dictionary (catalog) where the keys are the text IDs
+            (e.g., 'welcome-title') and the values are the text strings
+            already rendered in HTML format.
+    :rtype: Dict[str, str]
+    """
+    FlumlParser.parse(fluml_content)
+    return FlumlParser.render_html()
