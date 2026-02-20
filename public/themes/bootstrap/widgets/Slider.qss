@@ -1,0 +1,61 @@
+QSlider {
+    background: transparent;
+}
+
+QSlider:horizontal {
+    height: 30px;
+}
+
+QSlider:vertical {
+    width: 30px;
+}
+
+QSlider::groove {
+    border: 1px solid #dee2e6;
+    background: #e9ecef;
+    border-radius: 3px;
+}
+
+QSlider::groove:horizontal {
+    height: 6px;
+    margin: 2px 0;
+}
+
+QSlider::groove:vertical {
+    width: 6px;
+    margin: 0 2px;
+}
+
+QSlider::sub-page:horizontal, QSlider::add-page:vertical {
+    border-radius: 3px;
+}
+
+QSlider::handle {
+    background: #0d6efd;
+    border: 1px solid #0d6efd;
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+}
+
+QSlider::handle:horizontal {
+    margin: -6px 0;
+}
+
+QSlider::handle:vertical {
+    margin: 0 -6px;
+}
+
+QSlider:disabled {
+    opacity: 0.65;
+}
+
+QSlider::sub-page:disabled, QSlider::add-page:disabled {
+    background: #adb5bd;
+    border-color: #adb5bd;
+}
+
+QSlider::handle:disabled {
+    background: #adb5bd;
+    border-color: #adb5bd;
+}

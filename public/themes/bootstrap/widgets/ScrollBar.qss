@@ -1,0 +1,270 @@
+
+* {
+    font-family: "Montserrat", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+    font-size: 14px;
+    color: #343a40; 
+    
+    background-color: transparent;
+}
+
+/* ==================== QLineEdit, QTextEdit, QPlainTextEdit ==================== */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: #ededed;
+    /* border: 1px solid #ced4da; Borde de Bootstrap input-border-color */
+    border-radius: 6px;
+    padding: 6px 12px;
+    selection-background-color: #80bdff; /* Color de selección azul de Bootstrap */
+    selection-color: #ffffff; /* Texto blanco en la selección */
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border-color: #80bdff; /* Borde azul al enfocar */
+    outline: 0;
+
+}
+
+/* ==================== QComboBox ==================== */
+/* Bootstrap-like QComboBox QSS */
+
+QComboBox {
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+QComboBox > QFrame {
+    background: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    outline: none;
+}
+
+QComboBox {
+    background: #ffffff;
+    color: #212529;                /* texto */
+    border: 1px solid #ced4da;     /* border bootstrap */
+    border-radius: 6px;
+    padding: 6px 30px 6px 10px;    /* espacio para el texto, deja sitio al drop-down */
+    min-height: 15px;
+    font-size: 14px;
+    selection-background-color: #0d6efd;
+    selection-color: #ffffff;
+}
+
+QComboBox:hover {
+    border-color: #b7c0cc;
+}
+
+QComboBox:focus {
+    border-color: #86b7fe;
+    /* QSS no soporta box-shadow; usamos un borde más visible al focus */
+}
+
+/* Cuando está deshabilitado */
+QComboBox:disabled {
+    background: #e9ecef;
+    color: #6c757d;
+    border-color: #dee2e6;
+}
+
+/* Drop-down button (lado derecho) */
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 30px;
+    border-left: 1px solid #ced4da;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    background: transparent;
+}
+
+/* Flecha hacia abajo (SVG embebido) */
+QComboBox::down-arrow {
+    image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='12' height='12' fill='%23495057'><path d='M3.204 5h9.592L8 10.481 3.204 5z'/></svg>");
+    width: 12px;
+    height: 12px;
+}
+
+/* Cambiar color de flecha cuando está abierto */
+QComboBox::down-arrow:on {
+    image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='12' height='12' fill='%230d6efd'><path d='M3.204 5h9.592L8 10.481 3.204 5z'/></svg>");
+}
+
+/* Estilo del popup (la lista desplegable) */
+QComboBox QAbstractItemView {
+    background: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 6px;
+    outline: 0;
+    selection-background-color: #0d6efd;
+    selection-color: #ffffff;
+    /* Separación interior */
+    margin: 2px;
+    outline: none;
+}
+
+/* Items de la lista */
+QComboBox QAbstractItemView::item {
+    padding: 6px 8px;
+    
+}
+
+/* Hover en los items */
+QComboBox QAbstractItemView::item:hover {
+    background: rgba(13,110,253,0.08); /* suave hint del primario */
+}
+
+/* Scrollbar dentro del popup */
+QComboBox QAbstractItemView QScrollBar:vertical {
+    width: 10px;
+    margin: 6px;
+    background: transparent;
+}
+
+QComboBox QAbstractItemView QScrollBar::handle:vertical {
+    min-height: 20px;
+    border-radius: 5px;
+    background: #dee2e6;
+}
+
+QComboBox QAbstractItemView QScrollBar::handle:vertical:hover {
+    background: #ced4da;
+}
+
+QComboBox QAbstractItemView QScrollBar::add-line:vertical,
+QComboBox QAbstractItemView QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+
+/* ==================== QCheckBox y QRadioButton ==================== */
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 3px; /* Más cuadrado para checkbox */
+}
+
+QCheckBox::indicator:checked {
+    background-color: #007bff;
+    border: 1px solid #007bff;
+    image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iI2ZmZmZmZiIgY2xhc3M9ImJpIGJpLWNoZWNrIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGQ9Ik0xMy44NTQgMy42NDZhLjUuNSAwIDAgMSAwIC43MDhsLTcgN2EuNS41IDAgMCAxLS43MDggMEwxLjc5MyA5LjQxN2EuNS41IDAgMCAxIC43MDgtLjcwOEw2LjUgMTAuMjkybDYuNjQ2LTYuNjQ3YS41LjUgMCAwIDEgLjcwOCAweiIvPjwvc3ZnPg==); /* Icono de check blanco SVG */
+}
+
+QCheckBox::indicator:disabled {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 8px; /* Redondo para radio button */
+}
+
+QRadioButton::indicator:checked {
+    background-color: #007bff;
+    border: 1px solid #007bff;
+    image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iI2ZmZmZmZiIgY2xhc3M9ImJpIGJpLWRvdCIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJBNi41IDhhMS41IDEuNSAwIDEgMC0zIDAgMS41IDEuNSAwIDAgMCAzIDBaIi8+PC9zdmc+); /* Icono de punto blanco SVG */
+}
+
+QRadioButton::indicator:disabled {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+/* ==================== QProgressBar ==================== */
+QProgressBar {
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    text-align: center;
+    background-color: #e9ecef;
+    color: #343a40;
+}
+
+QProgressBar::chunk {
+    background-color: #007bff;
+    border-radius: 4px;
+}
+
+/* ==================== QScrollBar (vertical y horizontal) ==================== */
+QScrollBar:vertical {
+    border: 1px solid #ced4da;
+    background: #f8f9fa;
+    width: 12px;
+    margin: 0px 0px 0px 0px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background: #6c757d;
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px; /* Eliminar flechas */
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QScrollBar:horizontal {
+    border: 1px solid #ced4da;
+    background: #f8f9fa;
+    height: 12px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #6c757d;
+    min-width: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px; /* Eliminar flechas */
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+/* ==================== QTabWidget ==================== */
+QTabWidget::pane { /* El marco donde residen las páginas */
+    border: 1px solid #dee2e6; /* Borde de Bootstrap nav-tabs-border-color */
+    background-color: #ffffff;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+QTabBar::tab {
+    background: #e9ecef; /* Fondo de las pestañas inactivas */
+    border: 1px solid #dee2e6;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    padding: 8px 15px;
+    margin-right: 2px;
+    color: #495057; /* Texto de pestañas inactivas */
+}
+
+QTabBar::tab:selected {
+    background: #ffffff; /* Fondo de la pestaña activa */
+    border-bottom-color: #ffffff; /* Para que parezca unida al panel */
+    color: #007bff; /* Texto azul para la pestaña activa */
+    font-weight: bold;
+}
+
+QTabBar::tab:hover {
+    background-color: #e2e6ea; /* Fondo al pasar el ratón */
+    color: #007bff;
+}

@@ -1,185 +1,87 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/logo-dark.svg">
-  <img src="./assets/logo-light.svg" alt="Fluvel Logo">
-</picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/brands/logo-dark.svg">
+    <img src="./assets/brands/logo-light.svg" alt="Fluvel Logo">
+  </picture>
 
-![PyPI - License](https://img.shields.io/badge/license-MIT-green)
-![Python Versión](https://img.shields.io/badge/python-3.10+-blue)
-
+  ![Current Version](https://img.shields.io/badge/Version-1.0.0b1-green)
+  ![PyPI - License](https://img.shields.io/badge/License-LGPLv3--or--later-green)
+  ![Python Version](https://img.shields.io/badge/Python-3.11+-blue)
+  ![Platform Desktop](https://img.shields.io/badge/Platform-Desktop%20UI-blue)
+  ![Integrated CLI](https://img.shields.io/badge/CLI-Integrated-C084FC)
+  ![Hot Reloading](https://img.shields.io/badge/Hot--Reloading-Instantaneous-C084FC)
 </div>
 
-<p align="center">A modern, declarative framework for creating user interfaces with PySide6</p>
+> [!TIP]
+> **Stable API Architecture (Beta 1.0.0b1)**: Although Fluvel is currently in the testing phase, the class structure, the context handler system, and the PYRO state engine are definitive. Future updates will focus on internal optimization and component expansion, ensuring that your current code remains compatible with stable versions. Caution is recommended in critical production environments until the final 1.0 release.
 
-> [!Warning]
-> **Current Status: Beta Version (0.1.1b1)**: This is a preliminary version released for testing and feedback purposes. The API may change, and you may encounter bugs or incomplete features. It is not recommended for use in production environments.
+# About Fluvel
 
-## What is **Fluvel**?
-**Fluvel** is a framework built on **PySide6** that seeks to simplify and modernise the development of desktop applications in Python.
-Its main philosophy is to reduce repetitive code (boilerplate) and allow developers to create complex interfaces in a more intuitive and maintainable way.
+**Fluvel** is a framework built on top of **PySide6**. It abstracts the complexity of Qt by replacing manual layout management with **declarative context handlers** and a **Tailwind-inspired styling processor**. Powered by the **PYRO reactive engine**, it enables **deterministic state-to-UI binding** and a **decoupled resource architecture** (i18n/theming), ensuring that large-scale Python applications remain performant and easy to refactor.
 
-<table>
+<p align="center">
+  <img src="./assets/gifs/hot-reloader-demo.gif" alt="Fluvel Demo: Start Project & Hot-Reload" width="100%">
+  <br>
+  <i>Fluvel in action: Scaffolding a project and real-time UI updates via Hot-Reload.</i>
+  <br>
+  <a href="#1-installation"><b>Get started in 30 seconds →</b></a>
+</p>
 
-<tr>
-<td>
+## Key Features
 
-### Key Features
+* **Declarative UI Architecture**: Interface definition via the `Page` abstract class, utilizing a **context-handler-based** syntax. This approach abstracts boilerplate layout logic, focusing on component hierarchy and structural intent. [Learn more →](docs/md/ui-design.md)
 
-* **Declarative View Creation**: Design `views` with `AbstractView`, an abstract class that allows you to define interfaces in a simple, declarative, and intuitive way using context handlers.
-* **Reactive UI**: Use a system of `StringVars` to automatically update the interface when data changes. You do not need to manipulate widgets directly.
-* **Utility-First Theme Engine (QSS)**: The appearance of applications is customised with QSS files. Fluvel uses a system of ‘classes’ (style=‘primary’) inspired by frameworks such as Tailwind CSS or Bulma CSS, allowing for quick and consistent design.
-* **Internationalisation (i18n)**: Manage all static and dynamic content from `.fluml` files. This makes it easy to translate and adapt content without having to modify the code.
-* **Integrated Routing System**: Easily manage transitions between different views (screens) within your application using a dedicated system.
-* **Content Separation**: Menu content, labels, and help texts are managed outside of the code, allowing designers or translators to work independently.
-* **Integrated CLI**: Features a CLI with useful commands that streamline and facilitate application development and deployment.
-* **Rapid Development Cycle (Hot-Reloader)**: Incorporates a Hot-Reloading System that updates views instantly without having to reload the entire application, which speeds up design and customisation of widgets and themes using QSS and text content via `.fluml` files.
+* **PYRO Reactive Engine**: A standalone, agnostic state engine (*Pyro Yields Reactive Objects*) featuring **automatic dependency tracking**. It supports reactive primitives and collections (lists/dicts), enabling fine-grained UI binding and deterministic state synchronization. [Learn more →](docs/md/reactivity.md)
 
-</td>
-</tr>
+* **Utility-First Styling & QSSProcessor**: High-performance styling via an integrated **token-based** system. The `QSSProcessor` parses inline utility classes and external QSS, facilitating rapid component skinning without manual stylesheet overhead. [Learn more →](docs/md/styling.md)
+    * *Example*: `Button(style="primary fg[red] b[2px solid blue]")`
 
-<tr>
-<td>
+* **Structural i18n & Logic Decoupling**: Separation of concerns through `.fluml` **(Fluvel Markup Language)** and XML schemas. This architecture decouples static/dynamic content from the Python business logic, enabling independent translation workflows and resource management. [Learn more →](docs/md/i18n.md)
 
-<div align="center">
+* **Stateful Routing System**: Centralized navigation management via the `Router` class, handling page lifecycle and transitions within a unified application state.
 
-![demo-i18n](assets/gifs/i18n-example.gif)
+* **Integrated Dev-Tools CLI**: A dedicated command-line interface for automated project scaffolding, asset management, and deployment workflows.
 
-*Example of Fluvel's internationalisation system. The entire interface, including menus, is translated instantly, all managed from separate `.fluml` and `.xml` files. [See source code](playground/example_app/views/login.py)*
-</div>
-
-</td>
-</tr>
-</table>
-
+* **Hot-Reloading Environment**: A development-time watcher that performs **runtime hot-patching** of pages. It allows for instantaneous UI and theme iterations without destroying the application process or losing current state. [Learn more →](docs/md/ui-design.md#24-the-hot-reloader)
 
 ## 🚀 Quick Start
 
-### 1. Installation (from TestPyPI)
-To install this beta version, use the following command:
-```powershell
-# 1. Create a Python Environment
-python.exe -m venv venv
+### 1. Installation
+To install this version, use the following command:
 
-# 2. Activate venv
-venv/Scripts/Activate
+```bash
+# Setup environment
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
 
-# 3. Install Fluvel from PyPi
-pip install --extra-index-url https://test.pypi.org/simple/ fluvel
-
-# 4. Verify correct installation with pip list
-pip list
+# Install Fluvel
+pip install fluvel
 ```
 
-### 2. Run a few commands to start using **Fluvel**
-```powershell
-# 1. Create the project structure
-fluvel startproject
+### 2. Starting a Project
+Create your first application with the integrated CLI:
 
-# 2. Run the application
+```bash
+fluvel startproject
 fluvel run
 ```
 
-## Basic Concepts
+## Documentation Guide
 
-### `XML`, the language for application menus
-Fluvel takes advantage of the nesting nature of menus to manage them logically and declaratively in external files. To do this, it uses the `xml` language and defines the [structural rules](docs/md/parsers/xml-rules.md). 
+Once you have your first project up and running, you can delve deeper into Fluvel's fundamental pillars. Each of these modules is designed to cover a specific aspect of your application's lifecycle and development:
 
-```xml
-<!-- in ./static/content/en/menus/main-menu.xml -->
+* [1. Architecture](docs/md/architecture.md)
+* [2. UI Design](docs/md/ui-design.md)
+* [3. Styling](docs/md/styling.md)
+* [4. Reactivity](docs/md/reactivity.md)
+* [5. Internationalization (i18n)](docs/md/i18n.md)
+* [6. Deployment](docs/md/deployment.md)
 
-<window-menu-bar>
-  <menu id="file_menu" text="File">
-    <o id="new_file">New File</o>
-    <o id="new_window">New Window</o>
-    <o id="new_from_template">New from Template</o>
+## Project Roadmap
+We have big plans for `Fluvel`, including AI-powered translations, Rust-core optimizations, and advanced IDE tooling.
 
-    <sep/>
-    <o id="open_file">Open...</o>
-    <o id="open_recent">Open Recent</o>
+[See the full Roadmap here →](docs/md/roadmap.md)
 
-    <sep/>
-    <submenu id="show_windows" text="Show Windows">
-      <o id="toolbar">Toolbar</o>
-      <o id="sidebar">Sidebar</o>
-      <o id="rulers">Rulers</o>
-      <o id="grid">Grid</o>
-      <o id="status_bar">Status Bar</o>
-    </submenu>
-
-    <sep/>
-    <o id="quit">Quit</o>
-  </menu>
-</window-menu-bar>
-```
-*A brief demonstration of building typical application menu bars using the `xml` language.*
-*You can consult the [syntactic rules](docs/md/parsers/xml-rules.md) for creating the menu bar.*
-
-### `Fluml`, the language for managing the textual content of applications
-The `fluml` language and, consequently, its `.fluml` extension is a DSL specific to **Fluvel** with a syntax similar to **Markdown** designed to manage the static text content of the PySide6 application, i.e., the text displayed in Labels, Buttons, and other Text Widgets. You can learn about its [style and functionality rules](#style-and-functionality-rules) or view its [syntactic rules](./docs/md/parsers/fluml-rules.md) directly.
-
-## Style and functionality rules
-| Style           | Syntax            | Example                                              | Result in a Label                                          |
-|-----------------|-------------------|------------------------------------------------------|------------------------------------------------------------|
-| Italic          | `* *`             | `*This text is italicized*`                          |[see result](assets/images/lbl-italic.png)                  |
-| Bold            | `** **`           | `**This is bold text**`                              |[see result](assets/images/lbl-bold.png)                    |
-| Bold and Italic | `*** ***`         | `****This text is in bold and italics****`           |[see result](assets/images/lbl-bold-and-italic.png)         |
-| Underline       | `__ __`           | `__This text is underlined__`                        |[see result](assets/images/lbl-underline.png)               |
-| Line Through    | `-- --`           | `--This was mistaken text--`                         |[see result](assets/images/lbl-line-through.png)            |
-| Subscript       | `<sub> </sub>`    | `This is a <sub>subscript</sub> text`                |[see result](assets/images/lbl-sub.png)                     |
-| Superscript     | `<sup> </sup>`    | `This is a <sup>superscript</sup> text`              |[see result](assets/images/lbl-sup.png)                     |
-| Link            | `{text \| url}`   | `Check our {GitHub \| https://www.github.com} page.` |[see result](assets/images/lbl-link.png)                    |
-| Placeholders    | `$0, $1, etc..`   | `Hello! my name is $0.`                              |[see result](assets/images/lbl-placeholder.gif)             |
-
-#### Example in `.fluml` files
-```
-[combined-styles]:
-    Hi! **$0**, this is *a* __demostration__. Don't forget to visit our *{GitHub | https://www.github.com}* page.
-```
-
-#### Use in Python `views`
-
-```python
-from fluvel import View
-from fluvel.components import StringVar
-
-class MyView(View):
-
-  def build_ui(self):
-
-    with self.Vertical(self.container) as v:
-
-      # You can replace the marker $0 with simple text
-      my_name = "John Doe"
-      v.Label(text=["combined-styles", my_name], style="h2")
-
-      # or use StringVar
-      variable_name = StringVar("John Doe")
-      v.Label(text=["combined-styles", variable_name], style="h2")
-
-      # The label reacts to changes in the StringVar
-      # and updates automatically
-      variable_name.value = "Other name"
-```
-*Using a list `[]` in the `text` parameter indicates that you want to access*
-*a specific block of text from a `.fluml` file, so its first element corresponds*
-*to the content ID and the following elements replace the placeholders ($0, $1, etc.).*
-
-  #### Result in a `Label`
-  ![syled-text-result](assets/gifs/styled-text-example.gif)
-
-
-## Roadmap
-With the base of core systems already developed ([key features](#key-features)), Fluvel now needs to expand them to encompass and expose the broad PySide6 ecosystem. 
-Therefore, here are some of the goals in mind.
-
-* **Utility and Frontend API**
-  * **Expansion of the F-Widgets Library**: Fluvel needs to cover the broad spectrum of `QWidgets` and expose a simple API on them.
-  * **Development of Systems for Coverage of the `QtGui` Module**: You can see a glimpse of this in the Animator, Factory, and Customizer modules in the fluvel/composer directory. The central concept is to centralize and simplify the graphic component design philosophy proposed by PySide6.
-
-* **Core API**
-  * **Automatic Translation System**: Through the use of the google-cloud-translate or deepl translation APIs, a configuration file, and the translate command, the system will automatically generate complete, ready-to-use translations from your .fluml and .xml content, transforming i18n into a near zero-effort task.
-* **Documentation**
-  * **Comprehensive Documentation**: Implementation of Sphinx-rST documentation, built directly from high-quality Docstrings, covering API references, in-depth tutorials, and best practices for developing scalable applications with Fluvel.
-## Licence
-Fluvel is an open-source project, licensed under the MIT Licence.
+## License
+Fluvel is an open-source project, licensed under the [GNU LGPL-3.0 Licence](https://www.gnu.org/licenses/lgpl-3.0.html) (or any later version).

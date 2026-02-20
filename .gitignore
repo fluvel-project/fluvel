@@ -1,25 +1,32 @@
-# Directorios de entorno virtual
+# Virtual environment directories 
+# (just in case, Fluvel is managed through Poetry)
 venv/
 .venv/
 
-# Directorios de configuración de IDEs
+# IDEs
 .vscode/
 .vs/
 .idea/
 
-# Archivos de caché de Python
+# Python cache files
 __pycache__/
 *.pyc
+*.pyo
+*.pytest_cache/
 
-# Archivos de registro
+# Log files
 *.log
 
-# Archivos de datos temporales o generados
+# Temporary or generated data files
+.fluvel/
+.temp/
+temp/
+.ruff_cache/
 *.env
 .env.local
+dist/
+build/
+README.pypi.md
 
-# Prox
-fluvel/cli/translator
-
-# on dev
+# In progress
 docs/rst

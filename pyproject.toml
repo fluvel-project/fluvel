@@ -1,28 +1,49 @@
 [project]
 name = "fluvel"
-version = "0.1.2b1"
-description = "A Python framework for building modern and declarative UIs with PySide6."
+version = "1.0.0b1"
+description = "A modern, reactive, and high-performance GUI framework for Python based on PySide6."
 authors = [
-    {name = "robotid7@outlook.es"}
+    {name = "J. F. Escobar", email = "robotid7@outlook.es"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
-requires-python = ">=3.10,<3.14"
-dependencies = [
-    "pyside6 (>=6.9.1,<7.0.0)",
-    "toml (>=0.10.2,<0.11.0)",
-    "watchdog (>=6.0.0,<7.0.0)",
-    "click (>=8.2.1,<9.0.0)",
-    "qtawesome (>=1.4.0,<2.0.0)"
+license = "LGPL-3.0-or-later"
+readme = "README.pypi.md"
+requires-python = ">=3.11,<3.14"
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: User Interfaces",
+    "Operating System :: OS Independent",
 ]
 
+dependencies = [
+    "pyside6>=6.8.0,<7.0.0",
+    "watchdog>=6.0.0,<7.0.0",
+    "click>=8.1.0,<9.0.0",
+    "qtawesome>=1.3.0,<2.0.0",
+    "orjson>=3.11.5,<4.0.0"
+]
+
+keywords = ["gui", "pyside6", "qt", "reactive", "framework", "declarative", "desktop-apps"]
+
+[project.urls]
+"Repository" = "https://github.com/fluvel-project/fluvel"
+"Documentation" = "https://github.com/fluvel-project/fluvel#documentation-guide"
+"Bug Tracker" = "https://github.com/fluvel-project/fluvel/issues"
+
+[project.scripts]
+fluvel = "fluvel.cli.cli:main"
+
 [tool.poetry]
+packages = [{include = "fluvel"}]
+include = ["fluvel/py.typed", "fluvel/**/*.pyi"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
-black = "^25.1.0"
-click = "^8.2.1"
-
+ruff = "^0.14.14"
 
 [[tool.poetry.source]]
 name = "pypi-test"
@@ -33,8 +54,13 @@ priority = "supplemental"
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.scripts]
-fluvel = "fluvel.cli.cli:main"
+[tool.ruff]
+target-version = "py311"
+line-length = 100
 
-[[tool.poetry.packages]]
-include = "fluvel"
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+per-file-ignores = {"fluvel/cli/templates/*" = ["E501"]}
+
+[tool.ruff.format]
+quote-style = "double"

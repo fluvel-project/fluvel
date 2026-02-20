@@ -1,11 +1,37 @@
-import click, re
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
+import re
 from dataclasses import dataclass
-from typing import List, Tuple
+
+import click
+
+COLORS: set[str] = {
+    "black",
+    "red",
+    "green",
+    "yellow",
+    "blue",
+    "magenta",
+    "cyan",
+    "white",
+    "bright_black",
+    "bright_red",
+    "bright_green",
+    "bright_yellow",
+    "bright_blue",
+    "bright_magenta",
+    "bright_cyan",
+    "bright_white",
+    "reset",
+}
+
 
 @dataclass(slots=True)
-class Modifiers:
+class Modifier:
     color: str
     is_bold: bool
+
 
 class ClickStyled:
     """
@@ -39,12 +65,14 @@ class ClickStyled:
 
         modifier = cls._apply_modifiers(raw_style)
 
+        if modifier.color not in COLORS:
+            return match.group(0)
+
         return click.style(text=text_content, fg=modifier.color, bold=modifier.is_bold)
 
     @classmethod
-    def _apply_modifiers(cls, raw_style: str) -> Modifiers:
-
-        # Modifiers
+    def _apply_modifiers(cls, raw_style: str) -> Modifier:
+        # Modifier
         is_bold = "!" in raw_style
         is_bright = "+" in raw_style
 
@@ -54,16 +82,12 @@ class ClickStyled:
         if is_bright and not color_name.startswith("bright_"):
             color_name = f"bright_{color_name}"
 
-        return Modifiers(
-            color=color_name,
-            is_bold=is_bold
-        )
+        return Modifier(color=color_name, is_bold=is_bold)
 
     @classmethod
-    def echo(cls, message: str) -> None:
+    def process(cls, message: str) -> str:
         """
-        Prints a message and a new line to standard output or a file,
-        applying Click styles for the foreground colors defined
+        Apply Click styles for the foreground colors defined
         in the message using the syntax ``[color](text)``.
 
         The supported color names are the same as those in :func:`click.style`:
@@ -89,17 +113,16 @@ class ClickStyled:
         :param message: The message to print, potentially containing style markers.
         :type message: str
 
-        :returns: Nothing (prints directly to standard output).
-        :rtype: None
+        :returns: The final message completely stylized.
+        :rtype: str
         """
 
         full_message = re.sub(cls.regex, cls._style_replacer, message)
-        click.echo(full_message)
+
+        return full_message
 
     @classmethod
-    def paint_substrings(
-        cls, text: str, replacements: List[Tuple[str, str]]
-    ) -> str:
+    def sub(cls, text: str, replacements: list[tuple[str, str]]) -> str:
         """
         Applies Click styles to specific substrings within a larger text block
         (like an ASCII tree structure).
@@ -121,7 +144,7 @@ class ClickStyled:
 
             tree_text = "The letter 'Y' is repeated 4 times: Y Y Y Y"
 
-            styled_text = ClickStyled.paint_substrings(
+            styled_text = ClickStyled.sub(
                 tree_text,
                 [
                     ("letter", "yellow"),    # All 'letter' matches turn yellow.
@@ -130,8 +153,7 @@ class ClickStyled:
             )
         """
 
-        for original, color in replacements: 
-
+        for original, color in replacements:
             modifier = cls._apply_modifiers(color)
 
             styled_replacement = click.style(original, fg=modifier.color, bold=modifier.is_bold)
@@ -179,5 +201,10 @@ def echo(msg: str) -> None:
         echo("[red!](Error): Critical failure.")
         echo("[yellow+](Warning): Check your config.")
     """
+    full_message: str = ClickStyled.process(msg)
+    click.echo(full_message)
 
-    ClickStyled.echo(msg)
+
+def click_confirm(text: str, default: bool) -> bool:
+    full_message = ClickStyled.process(text)
+    return click.confirm(full_message, default)

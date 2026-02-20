@@ -1,47 +1,27 @@
-from fluvel.core import AppWindow
+from fluvel import AppWindow, er
 
-import qtawesome as qta
 
 class MainWindow(AppWindow):
-
     def init_ui(self):
         """Display the `components` in the Main Window."""
 
-        self.configure(
-            size=(920, 605),
-            flags=["frameless"],
-            attributes=["translucent-background"]
-        )
-        
+        self.configure(size=(920, 605))
+
         # configure menu options
-        self.build_menu_bar()
+        # self.build_menu_bar()
 
     def build_menu_bar(self):
-
-        change_theme = self.root.change_theme
-        change_language = self.root.change_language
+        change_theme = self.app.change_theme
+        change_language = self.app.change_language
 
         self.menu_bar.configure(
             controls={
-                # -------------- FILE ---------------------
-                "quit": {
-                    "triggered": self.close,
-                    "Shortcut": "Ctrl+Q"
-                },
+                # -------------- FILE --------------------
+                "quit": {"triggered": self.close, "Shortcut": "Ctrl+Q"},
                 # -------------- SETTINGS ----------------
-                "bootstrap_theme": {
-                    "triggered": lambda: change_theme("bootstrap"),
-                    "Icon": qta.icon(f"fa5b.github", color="black", options=[{"scale_factor": 0.9}])
-                },
-                "modern_dark_theme": {
-                    "triggered": lambda: change_theme("modern-dark")
-                },
-                "es_language": {
-                    "triggered": lambda: change_language("es")
-                },
-                "en_language": {
-                    "triggered": lambda: change_language("en")
-                },
+                "bootstrap_theme": {"triggered": lambda: change_theme("bootstrap")},
+                "modern_dark_theme": {"triggered": er.set_lang("modern-dark")},
+                "es_language": {"triggered": er.set_lang("es")},
+                "en_language": {"triggered": er.set_lang("en")},
             }
         )
-

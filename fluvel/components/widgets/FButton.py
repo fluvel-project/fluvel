@@ -1,111 +1,89 @@
-from typing import Literal, TypedDict, Unpack
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-# Fluvel
-from fluvel.core.abstract_models.FluvelWidget import FluvelWidget
-from fluvel.core.abstract_models.FluvelTextWidget import FluvelTextWidget
-from fluvel.components.gui import StringVar
+from collections.abc import Callable
+from typing import Unpack
 
-from fluvel.core.enums.alignment import AlignmentTypes
-
-# PySide6
-from PySide6.QtWidgets import QPushButton
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon
 
-# Fluvel core utils
-from fluvel.core.tools import configure_process
+# PySide6
+from PySide6.QtWidgets import QMenu, QPushButton
+
+from fluvel.core.abstract.FTextWidget import FTextWidget
+
+# Fluvel
+from fluvel.core.abstract.FWidget import FWidget, FWidgetKwargs
+from fluvel.i18n.I18nTextVar import I18nTextVar
 
 
-ButtonStyles = Literal[
-    "primary",
-    "secondary",
-    "info",
-    "success",
-    "warning",
-    "danger",
-    "dark",
-    "light",
-    "primary-outlined",
-    "secondary-outlined",
-    "info-outlined",
-    "success-outlined",
-    "warning-outlined",
-    "danger-outlined",
-    "dark-outlined",
-    "light-outlined",
-]
+class FButtonKwargs(FWidgetKwargs, total=False):
+    """Specific arguments for FButton."""
 
-
-class FButtonKwargs(TypedDict, total=False):
-    text            : str | list
-    textvariable    : StringVar
-    style           : ButtonStyles
-    checkable       : bool
-    icon            : QIcon
-    icon_size       : tuple[int, int]
-    
-    # Shape and behavior
-    size            : tuple[int, int]
+    text: str | I18nTextVar
+    checkable: bool
+    icon: QIcon
+    icon_size: int
+    shortcut: str
+    is_default: bool
+    auto_default: bool
+    flat: bool
+    menu: QMenu
 
     # Signals
-    on_click        : callable
-    on_pressed      : callable
-    on_released     : callable
-    on_toggled      : callable
-
-    # Layout alignment
-    alignment       : AlignmentTypes 
+    on_click: Callable[[], None]
+    on_pressed: Callable[[], None]
+    on_released: Callable[[], None]
+    on_toggled: Callable[[bool], None]
 
 
-class FButton(QPushButton, FluvelWidget, FluvelTextWidget):
-    """
-    Clase base de **`Fluvel`** para **`QPushButton`**.
-    """
+class FButton(QPushButton, FWidget, FTextWidget):
+    """Fluvel's Button component class, wrapping QPushButton."""
 
-    WIDGET_TYPE: str = "QPushButton"
+    _BINDABLE_PROPERTY = None
+    _BINDABLE_SIGNAL = "clicked"
 
-    _MAPPING_METHODS: dict = {
+    _QT_PROPERTY_MAP: dict = {
         "text": "setText",
         "checkable": "setCheckable",
         "icon": "setIcon",
         "icon_size": "setIconSize",
+        "enabled": "setEnabled",
+        "shortcut": "setShortcut",
+        "is_default": "setDefault",
+        "auto_default": "setAutoDefault",
+        "flat": "setFlat",
+        "menu": "setMenu",
         # Signals
         "on_click": "clicked",
         "on_pressed": "pressed",
         "on_released": "released",
         "on_toggled": "toggled",
-        # Shape and behavior
-        "size": "setFixedSize"
     }
 
     def __init__(self, **kwargs: Unpack[FButtonKwargs]):
         super().__init__()
 
+        # 1. Set default values for Fluvel and Qt
         self._set_defaults()
 
+        # 2. Configure properties
         self.configure(**kwargs)
 
     def configure(self, **kwargs: Unpack[FButtonKwargs]) -> None:
+        # 1. Manage specific properties of FTextWidget subclasses
+        kwargs = self._apply_texts(**kwargs)
 
-        # Aplicando los estilos QSS
-        kwargs = self._apply_styles(**kwargs)
+        # 2. Perform specific type conversions (e.g., Alignment.get)
+        if icon_size := kwargs.get("icon_size"):
+            kwargs["icon_size"] = QSize(icon_size, icon_size)
 
-        kwargs = self.get_static_text(**kwargs)
-
-        if icon_size:=kwargs.get("icon_size"):
-
-            kwargs["icon_size"] = QSize(*icon_size)
-
-        configure_process(self, self._MAPPING_METHODS, **kwargs)
-
+        # 3. Manage generic properties (bind, style, size_policy, etc.)
+        super().configure(**kwargs)
 
     def _set_defaults(self) -> None:
+        # 1. Establish the generic properties of an F-Widget
+        super()._set_defaults()
 
-        self._set_widget_defaults()
-
-        # Aplicar el cursor de puntero
+        # By default, the cursor is PointingHang
         self.setCursor(Qt.PointingHandCursor)
-
-    def __setitem__(self, key, value: any):
-
-        self.configure(**{key: value})

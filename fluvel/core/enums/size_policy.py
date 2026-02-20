@@ -1,71 +1,48 @@
-from typing import Literal, Dict, Tuple
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
+from typing import Literal, final
+
 from PySide6.QtWidgets import QSizePolicy
 
 SizePolicyTypes = Literal[
-    "fixed", 
-    "minimum", 
-    "maximum", 
-    "preferred", 
-    "expanding", 
-    "min_expanding", 
-    "ignored"
+    "fixed", "minimum", "maximum", "preferred", "expanding", "min-expanding", "ignored"
 ]
 
+
+@final
 class SizePolicy:
-    """
-    Abstracción de QSizePolicy.Policy para usar cadenas simples.
-    """
+    FIXED = QSizePolicy.Policy.Fixed
+    MINIMUM = QSizePolicy.Policy.Minimum
+    MAXIMUM = QSizePolicy.Policy.Maximum
+    PREFERRED = QSizePolicy.Policy.Preferred
+    EXPANDING = QSizePolicy.Policy.Expanding
+    MIN_EXPANDING = QSizePolicy.Policy.MinimumExpanding
+    IGNORED = QSizePolicy.Policy.Ignored
 
-    FIXED           : QSizePolicy.Policy = QSizePolicy.Policy.Fixed
-    MINIMUM         : QSizePolicy.Policy = QSizePolicy.Policy.Minimum
-    MAXIMUM         : QSizePolicy.Policy = QSizePolicy.Policy.Maximum
-    PREFERRED       : QSizePolicy.Policy = QSizePolicy.Policy.Preferred
-    EXPANDING       : QSizePolicy.Policy = QSizePolicy.Policy.Expanding
-    MIN_EXPANDING   : QSizePolicy.Policy = QSizePolicy.Policy.MinimumExpanding
-    IGNORED         : QSizePolicy.Policy = QSizePolicy.Policy.Ignored
-
-
-    _POLICY_MAP: Dict[str, QSizePolicy.Policy] = {
+    __MAP__: dict[SizePolicyTypes, QSizePolicy.Policy] = {
         "fixed": FIXED,
         "minimum": MINIMUM,
         "maximum": MAXIMUM,
         "preferred": PREFERRED,
         "expanding": EXPANDING,
-        "min_expanding": MIN_EXPANDING,
+        "min-expanding": MIN_EXPANDING,
         "ignored": IGNORED,
     }
 
-    @classmethod
-    def get_policy(cls, policy_string: SizePolicyTypes) -> QSizePolicy.Policy:
-        """
-        Convierte una cadena de política de tamaño a la bandera de Qt (QSizePolicy.Policy).
-        """
-       
-        return cls._POLICY_MAP.get(policy_string, cls.PREFERRED)
+    @staticmethod
+    def get(size_policy: SizePolicyTypes | tuple[SizePolicyTypes, SizePolicyTypes]) -> QSizePolicy:
+        # local binding
+        _map = SizePolicy.__MAP__
+        _default = QSizePolicy.Policy.Preferred
 
-    @classmethod
-    def get(
-        cls, 
-        policy_def: SizePolicyTypes | Tuple[SizePolicyTypes, SizePolicyTypes]
-    ) -> QSizePolicy:
-        """
-        Método de conveniencia para obtener un objeto QSizePolicy.
-        
-        Acepta:
-        1. Una sola cadena (Ej: "expanding"): Aplica esa política a ambas dimensiones.
-        2. Una tupla de dos cadenas (Ej: ("expanding", "fixed")): Horizontal, Vertical.
-        """
-        
-        if isinstance(policy_def, str):
+        if isinstance(size_policy, str):
+            pol = _map.get(size_policy, _default)
+            return QSizePolicy(pol, pol)
 
-            qt_policy = cls.get_policy(policy_def)
+        elif isinstance(size_policy, tuple) and len(size_policy) == 2:
+            h_pol = _map.get(size_policy[0], _default)
+            v_pol = _map.get(size_policy[1], _default)
+            return QSizePolicy(h_pol, v_pol)
 
-            return QSizePolicy(qt_policy, qt_policy)
-        
-        elif isinstance(policy_def, tuple) and len(policy_def) == 2:
-
-            horiz_policy, vert_policy = [cls.get_policy(pol) for pol in policy_def]
-
-            return QSizePolicy(horiz_policy, vert_policy)
-
-        return QSizePolicy(cls.PREFERRED, cls.PREFERRED)
+        return QSizePolicy(_default, _default)

@@ -1,11 +1,13 @@
-from fluvel.composer import Factory
-import qtawesome as qta
+import fluvel as fl
+from fluvel.composer import Component
+from fluvel.tools import icon
 
-@Factory.compose("FButton")
-def CloseIcon(color: str, on_click: callable):
 
+@Component("FIconButton")
+def CloseIcon(color: str = "black"):
     return {
-        "icon": qta.icon("fa5s.times", color=f"{color}", options=[{"scale_factor": 1.0}]),
-        "on_click": on_click,
-        "style": "b[none]"
+        "icon": icon("close", color=color),
+        "style": "b[none] icon-s[18px]",
+        "alignment": "right",
+        "on_click": fl.Page.main_window.close,
     }

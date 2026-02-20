@@ -1,12 +1,16 @@
-import importlib, functools
-from typing import Type, TypeVar
-from PySide6.QtWidgets import QWidget
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-TWidget = TypeVar(name="TWidget", bound=QWidget)
+import functools
+import importlib
+from typing import TypeVar
+
+from PySide6.QtWidgets import QWidget
 
 # Tip-helpers
 from fluvel.utils.tip_helpers import AllWidgetsTypes
 
+TWidget = TypeVar(name="TWidget", bound=QWidget)
 
 class Factory:
     """
@@ -19,7 +23,7 @@ class Factory:
     :type _stock: dict[str, Type[TWidget]]
     """
 
-    _stock: dict[str, Type[TWidget]] = {}
+    _stock: dict[str, type[TWidget]] = {}
 
     class Target:
         """
@@ -31,7 +35,7 @@ class Factory:
         :ivar WidgetClass: The imported TWidget class.
         :type WidgetClass: Type[TWidget]
         """
-        
+
         def __init__(self, widget_target: str):
             """
             Initializes the Target and loads the target widget class into the cache.
@@ -41,13 +45,15 @@ class Factory:
             """
 
             if widget_target not in Factory._stock:
-
-                widget_module = importlib.import_module(f"fluvel.components.widgets.{widget_target}")
+                widget_module = importlib.import_module(
+                    f"fluvel.components.widgets.{widget_target}"
+                )
 
                 Factory._stock[widget_target] = getattr(widget_module, widget_target)
 
             self.WidgetClass = Factory._stock[widget_target]
-            
+
+
 def Component(target: AllWidgetsTypes):
     """
     A decorator that turns a configuration function into a component factory.
@@ -78,23 +84,21 @@ def Component(target: AllWidgetsTypes):
         from components.custom import PrimaryButton
         ...
         with self.Vertical() as v:
-    
+
             # 1) Creates an FButton with text="Submit" and style="primary bold"
             v.add_widget(PrimaryButton(text="Submit"))
-            
+
             # 2) or create a method to speed up adding the factory component to the layout
             v.PrimaryButton = v.from_factory(PrimaryButton)
             v.PrimaryButton(text="Submit")
     """
-    
+
     object_target = Factory.Target(target)
 
     def decorator(func):
-        
         @functools.wraps(func)
         def component_wrapper(*args, **user_kwargs) -> TWidget:
-
-            base_config = func(*args, **user_kwargs) 
+            base_config = func(*args, **user_kwargs)
 
             return object_target.WidgetClass(**base_config)
 

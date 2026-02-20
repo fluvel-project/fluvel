@@ -1,101 +1,84 @@
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 from typing import TypedDict, Unpack
 
-# Fluvel
-from fluvel.components.gui.StringVar import StringVar
-from fluvel.components.gui.FAction import FAction
-from fluvel.models.GlobalContent import GlobalContent
+from PySide6.QtGui import QIcon
 
 # PySide6
 from PySide6.QtWidgets import QMenu, QMenuBar
-from PySide6.QtGui import QIcon
+
+# Fluvel
+from fluvel.components.gui.FAction import FAction
+from fluvel.i18n.I18nTextVar import I18nMenuTextVar
+from fluvel.i18n.ResourceManager import er
 
 
 class FMenuKwargs(TypedDict, total=False):
+    parent: QMenu | QMenuBar | None
+    menu_title: str | I18nMenuTextVar
+    menu_structure: dict
+    registry: dict[str, FAction]
 
-    parent          : QMenu | QMenuBar | None
-    title           : str | StringVar
-    menu_structure  : dict
 
 class FMenu(QMenu):
-
     def __init__(self, **kwargs: Unpack[FMenuKwargs]) -> None:
         super().__init__(kwargs.get("parent"))
 
-        self.all_menu_options: list = []
+        self._registry = kwargs.get("registry", {})
 
         self.configure(**kwargs)
 
         if "menu_structure" in kwargs:
-
             self._create_menu(kwargs.get("parent"), kwargs.get("menu_structure"))
 
     def configure(self, **kwargs: Unpack[FMenuKwargs]) -> None:
+        if menu_title := kwargs.get("menu_title"):
+            if isinstance(menu_title, I18nMenuTextVar):
+                menu_title.setParent(self)
+                menu_title.valueChanged.connect(self.setTitle)
+                menu_title = menu_title.value
 
-        if "title" in kwargs:
-
-            string_var = kwargs["title"]
-
-            string_var.valueChanged.connect(self.setTitle)
-
-            self.setTitle(string_var.value)
+            self.setTitle(menu_title)
 
     def _create_menu(self, parent, structure: dict):
-        
-        parent_menu = self if not parent else parent
+        parent_menu = self if not isinstance(parent, QMenuBar) else parent
+        self._structure_menu(parent_menu, structure, self._registry)
 
-        self.origin_object = parent
+    def _structure_menu(self, parent_menu, structure, registry, prefix=""):
+        for _id, element_dict in structure.items():
+            if _id.startswith("sep_"):
+                parent_menu.addSeparator()
+                continue
 
-        self._structure_menu(parent_menu, structure)
-
-    def _structure_menu(self, parent_menu: QMenu, menu_structure: dict):
-        # Itera sobre la lista de elementos en un submenú o menú principal
-        for _id, element_dict in menu_structure.items():
-
-            text = element_dict.get("text")
+            path = f"{prefix}.{_id}" if prefix else _id
             elements = element_dict.get("elements")
 
-            if text == "---":
-                # Caso base: es un separador
-                parent_menu.addSeparator()
-
-            elif elements:
-                # Es un submenú, crea un FMenu
+            if elements:
                 new_menu = self._add_menu(parent_menu, _id, element_dict)
-                setattr(self.origin_object, _id, new_menu)
+                registry[path] = new_menu
 
-                # Llama recursivamente para construir el submenú
-                self._structure_menu(new_menu, elements)
+                self._structure_menu(new_menu, elements, registry, path)
             else:
-                # Es una acción
                 action = self._add_action(parent_menu, _id, element_dict)
-                setattr(self.origin_object, _id, action)
+                registry[path] = action
 
+    def _add_menu(self, parent_menu: QMenu | QMenuBar, element_id, element_dict: dict) -> "FMenu":
+        i18n_text = er[element_id]
+        menu = FMenu(parent=parent_menu, menu_title=i18n_text, registry=self._registry)
 
-    def _add_menu(self, parent_menu: QMenu, element_id, element_dict: dict) -> QMenu:
-        text = GlobalContent.menu_content[element_id]
-        menu = FMenu(parent=parent_menu, title=text)
         parent_menu.addMenu(menu)
-
         return menu
 
     def _add_action(self, parent_menu: QMenu, element_id: str, element_dict: dict) -> FAction:
-        """Método auxiliar para crear y añadir una QAction."""
-        text = GlobalContent.menu_content[element_id]
-        action = FAction(parent=parent_menu, text=text)
+        i18n_text = er[element_id]
+        action = FAction(parent=parent_menu, text=i18n_text)
 
-        # Opcional: añade icono si existe
-        icon_path = element_dict.get("icon")
-
-        if icon_path:
+        if icon_path := element_dict.get("icon"):
             action.setIcon(QIcon(icon_path))
-            
-        # Opcional: setea checkable si existe
-        checkable = element_dict.get("checkable")
-        if checkable:
+
+        if checkable := element_dict.get("checkable"):
             action.setCheckable(checkable)
 
         parent_menu.addAction(action)
-
-        self.all_menu_options.append(element_id)
-
         return action

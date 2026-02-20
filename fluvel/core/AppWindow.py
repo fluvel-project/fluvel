@@ -1,65 +1,76 @@
-from typing import TypedDict, Unpack, Tuple, List
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-# Fluvel
-from fluvel.core.abstract_models.FWidget import FWidget
-from fluvel.core.MenuBar import MenuBar
-from fluvel._user.GlobalConfig import AppConfig
-
-# Fluvel Controllers
-from fluvel.controllers.ContentHandler import ContentHandler
-from fluvel.controllers.reload_ui import reload_ui
-
-# Core Process
-from fluvel.core.tools.core_process import configure_process
+from typing import TYPE_CHECKING, TypedDict, Unpack
 
 # PySide6
 from PySide6.QtWidgets import QMainWindow, QStackedWidget
-from PySide6.QtCore import Qt
+
+from fluvel.core.abstract.FTextWidget import FTextWidget
+
+# Fluvel
+from fluvel.core.abstract.FWidget import FWidget
 
 # Utils
-from fluvel.utils.tip_helpers import WindowFlags, WindowStates
-from fluvel.core.enums.widget_attributes import WidgetAttributeTypes
+from fluvel.core.enums import (
+    WidgetAttributeTypes,
+    WindowState,
+    WindowStateTypes,
+    WindowType,
+    WindowTypes,
+)
+from fluvel.core.MenuBar import MenuBar
+
+# Fluvel Controllers
+from fluvel.i18n.I18nProvider import I18nProvider
+from fluvel.i18n.I18nTextVar import I18nTextVar
+from fluvel.user.UserSettings import Settings
+
+if TYPE_CHECKING:
+    from fluvel.core.App import App
+
 
 class AppWindowKwargs(TypedDict, total=False):
     """
     Specifies the optional keyword arguments used to configure the main application window.
     """
-    
-    title       : str
-    geometry    : Tuple[int, int, int, int] | List[int]
-    size        : Tuple[int, int] | List[int]
-    resizable   : bool
-    min_size    : Tuple[int, int] | List[int]
-    max_size    : Tuple[int, int] | List[int]
-    min_width   : int
-    min_height  : int
-    max_width   : int
-    max_height  : int
-    opacity     : float
-    show_mode   : WindowStates
-    flags       : List[WindowFlags]
-    attributes  : List[WidgetAttributeTypes]
 
-class AppWindow(QMainWindow, FWidget):
+    title: str | I18nTextVar
+    geometry: tuple[int, int, int, int] | list[int]
+    size: tuple[int, int]
+    resizable: bool
+    min_size: tuple[int, int]
+    max_size: tuple[int, int]
+    min_width: int
+    min_height: int
+    max_width: int
+    max_height: int
+    opacity: float
+    state: WindowStateTypes
+    flags: list[WindowTypes]
+    attributes: list[WidgetAttributeTypes]
+
+
+class AppWindow(QMainWindow, FWidget, FTextWidget):
     """
     The main window container for a Fluvel application.
 
     This class serves as the top-level "shell" for the entire user interface.
-    It inherits from :py:class:`PySide6.QtWidgets.QMainWindow` and is responsible for
-    managing core UI elements like the central widget area (a :py:class:`QStackedWidget`
+    It inherits from :class:`PySide6.QtWidgets.QMainWindow` and is responsible for
+    managing core UI elements like the central widget area (a :class:`QStackedWidget`
     for the Router), the menu bar, and the overall window properties.
 
     The primary way to use this class is to subclass it in your project.
 
-    :ivar root: The parent :py:class:`~fluvel.core.App.App` instance.
-    :type root: :py:class:`~fluvel.core.App.App`
+    :ivar app: The parent :class:`~fluvel.core.App.App` instance.
+    :type app: :class:`~fluvel.core.App.App`
 
     **Example of Subclassing:**
 
     .. code-block:: python
 
         # In your project's window.py
-        from fluvel.core import AppWindow, Router
+        from fluvel import AppWindow
 
         class MainWindow(AppWindow):
             def init_ui(self) -> None:
@@ -71,59 +82,58 @@ class AppWindow(QMainWindow, FWidget):
                 self.configure(title="My First Fluvel App", size=[1024, 768])
     """
 
-    _FLAGS = {
-        "frameless": "FramelessWindowHint",
-        "always-on-top": "WindowStaysOnTopHint",
-        "always-on-bottom": "WindowStaysOnBottomHint",
-        "title": "WindowTitleHint",
-        "sys-menu": "WindowSystemMenuHint",
-        "maximize-button": "WindowMaximizeButtonHint",
-        "minimize-button": "WindowMinimizeButtonHint",
-        "close-button": "WindowCloseButtonHint",
-        "click-through": "WindowTransparentForInput",
-    }
-
-    _MAPPING_METHODS = {
-        "title": "setWindowTitle", 
+    _QT_PROPERTY_MAP = {
+        "title": "setWindowTitle",
         "geometry": "setGeometry",
         "size": "resize",
-        "resizable": "setFixedSize",
-        "min_width": "setMinimumWidth",
-        "min_height": "setMinimumHeight",
-        "max_width": "setMaximumWidth",
-        "max_height": "setMaximumHeight",
-        "min_size": "setMinimumSize",
-        "max_size": "setMaximumSize",
         "opacity": "setWindowOpacity",
         "flags": "setWindowFlags",
-        "show_mode": "setWindowState",
+        "state": "setWindowState",
     }
 
-    def __init__(self) -> None:
+    def __init__(self, app_instance: "App") -> None:
         """
         Initializes the AppWindow.
 
-        It configures the window based on settings from ``AppConfig.window``, 
-        initializes the core UI components, and calls the user's :py:meth:`init_ui` hook.
+        It configures the window based on settings from :class:`~fluvel.user.UserSettings.Settings`,
+        initializes the core UI components, and calls the user's :meth:`__post_init__` hook.
 
-        :param root: The parent application instance (the :py:class:`~fluvel.core.App.App`).
-        :type root: :py:class:`~fluvel.core.App.App`
+        :param app: The parent application instance (the :class:`~fluvel.core.App.App`).
+        :type app: :class:`~fluvel.core.App.App`
 
         :rtype: None
         """
         super().__init__()
+        FWidget._set_defaults(self)
 
-        self._set_defaults()
+        # The fluvel.core.App instance
+        self.app: App = app_instance
 
-        # Se configura con las especificaciones del archivo .toml
-        self.configure(**vars(AppConfig.window))
+        # Configured with the specifications from the .toml file
+        if win_defaults := Settings.get("window"):
+            self.configure(**vars(win_defaults))
 
-        # Se inicializa y muestra UI
         self._init_core_ui()
-    
-    def _set_defaults(self) -> None:
 
-        super()._fwidget_defaults()
+        # Initializes and displays the UI
+        # Calls the optional __post_init__ hook
+        self.__post_init__()
+
+    def __post_init__(self) -> None:
+        """
+        An overridable method for initial user UI or Core configuration.
+
+        This method is intended to be implemented in your subclass of :class:`AppWindow`.
+        It is automatically called by Fluvel at the end of the initialization process,
+        after the central widget and menu bar have been created.
+
+        .. note::
+           This is the designated "hook" for adding your application's initial
+           setup logic, such as configuring menu actions or connecting signals.
+
+        :rtype: None
+        """
+        pass
 
     def configure(self, **kwargs: Unpack[AppWindowKwargs]) -> None:
         """
@@ -132,7 +142,7 @@ class AppWindow(QMainWindow, FWidget):
         This high-level method allows setting various window attributes using
         keyword arguments, which are typically loaded from the ``config.toml``
         file but can also be set programmatically.
-        
+
         :param title: Sets the window title.
         :type  title: str
 
@@ -167,55 +177,34 @@ class AppWindow(QMainWindow, FWidget):
         :type show_mode: str
 
         :param flags: A List of window flags to apply (e.g., "frameless").
-        :type flags: List[:py:data:`~fluvel.utils.tip_helpers.WindowFlags`]
+        :type flags: List[:obj:`~fluvel.core.enums.WindowTypes`]
 
         :param attributes: A List of widget attributes to configure low-level behavior.
-        :type attributes: List[:py:data:`~fluvel.utils.tip_helpers.WidgetAttributes`]
-    
+        :type attributes: List[:obj:`~fluvel.core.enums.WindowStateTypes`]
+
         :rtype: None
         """
 
-        kwargs = super().configure(**kwargs)
+        kwargs = self._apply_texts(**kwargs)
 
-        if "resizable" in kwargs:
-            if not kwargs["resizable"]:
-                kwargs["resizable"] = (self.width(), self.height())
-            else:
-                kwargs.pop("resizable")
-            
         if flags := kwargs.get("flags"):
-            previous_flag = Qt.WindowType.Window
-            for flag in flags:
-                previous_flag |= getattr(Qt.WindowType, self._FLAGS[flag])
-            kwargs["flags"] = previous_flag
-        
-        if mode := kwargs.get("show_mode"):
-            kwargs["show_mode"] = getattr(Qt.WindowState, f"Window{mode}")
+            kwargs["flags"] = WindowType.get(flags)
 
-        configure_process(self, self._MAPPING_METHODS, **kwargs)
+        if mode := kwargs.get("state"):
+            kwargs["state"] = WindowState.get(mode)
 
-    # abstract method where the initial state is defined
-    # of the UI via the -self.configure- method
-    def init_ui(self) -> None: 
-        """
-        An overridable method for initial user UI configuration.
+        super().configure(**kwargs)
 
-        This method is intended to be implemented in your subclass of :class:`AppWindow`.
-        It is automatically called by Fluvel at the end of the initialization process,
-        after the central widget and menu bar have been created.
-
-        .. note::
-           This is the designated "hook" for adding your application's initial
-           setup logic, such as configuring menu actions or connecting signals.
-        
-        :rtype: None
-        """
-        pass
+        # The self.width() and self.height() propqerties will not be set yet.
+        # If this is the first call to the method, it must be executed.
+        # The "resizable" logic will ONLY be applied after the size has been set.
+        if not kwargs.get("resizable", True):
+            self.setFixedSize(self.width(), self.height())
 
     def _init_core_ui(self) -> None:
         """
         Initializes the core UI components of the window.
-        
+
         This internal method orchestrates the setup of the central widget and
         the menu bar, and then calls the user-defined :meth:`init_ui` hook.
 
@@ -228,45 +217,24 @@ class AppWindow(QMainWindow, FWidget):
         # Configuring the Top Menu Bar
         self._set_menu_bar()
 
-        # Set initial configurations
-        self.init_ui()
-
     def _set_menu_bar(self) -> None:
         """
         Initializes and sets up the main menu bar from the content configuration.
         """
-        
-        if menu := ContentHandler.MENU_CONTENT.get("main-menu", {}):
-            
+
+        if menu := I18nProvider.raw_menus.get("main-menu", {}):
             # This is an instance of QMenuBar
             self.menu_bar = MenuBar(parent=self, structure=menu)
 
             # Adding the Menu Bar to the Window
             self.setMenuBar(self.menu_bar)
 
-    def _update_ui(self, router) -> None:
-        """
-        Refreshes the entire UI during a hot-reload event.
-
-        This method is called by the :py:class:`~fluvel.cli.reloader.HReloader` to destroy and recreate
-        UI components, ensuring that code changes are reflected visually.
-
-        .. warning::
-           This method is for internal use by the Hot-Reloading system and should
-           not be called directly by application code.
-
-        :param router: The application's Router instance, needed to re-render the current view.
-        :type router: :py:class:`~fluvel.core.Router.Router`
-        :rtype: None
-        """
-        reload_ui(self, router)
-        
     def _set_central_widget(self) -> None:
         """
-        Creates and configures the central :py:class:`PySide6.QtWidgets.QStackedWidget`.
+        Creates and configures the central :class:`PySide6.QtWidgets.QStackedWidget`.
 
         This widget serves as the container for all views managed by the
-        :py:class:`~fluvel.core.Router.Router`.
+        :class:`~fluvel.core.Router.Router`.
         :rtype: None
         """
         self.central_widget = QStackedWidget()
@@ -280,7 +248,7 @@ class AppWindow(QMainWindow, FWidget):
 
         .. note:: The geometry (size and position) is not reset so as not to lose the position
             and size that has been adjusted.
-        
+
         :rtype: None
         """
 
@@ -291,38 +259,30 @@ class AppWindow(QMainWindow, FWidget):
                 "sys-menu",
                 "minimize-button",
                 "maximize-button",
-                "close-button"                
-            ]
+                "close-button",
+            ],
         )
-        
-        # RESETEAR ATRIBUTOS
-        
-        # Iterar sobre todos los atributos conocidos y desactivarlos
-        for attr_key in self._ATTRIBUTES.values():
-            qt_attr = getattr(Qt.WidgetAttribute, attr_key)
-            self.setAttribute(qt_attr, False)
 
-        # para que la ventana se vea normal si estaba maximizada, etc.
-        self.setWindowState(Qt.WindowState.WindowNoState)
+        # Normalize the window state
+        self.setWindowState(WindowState.NORMAL)
 
         self.show()
 
     def frameless(self) -> None:
         """
-        Applies a clean, frameless window style, removing standard title bars
+        Applies a clean, frameless window style, removing standard title bars, menu bar
         and decorations, and enables a translucent background.
 
         This is commonly used for custom UI designs where the application draws
         its own title bar or needs irregular shapes.
-        
+
         :rtype: None
         """
 
-        # Configura la ventana como sin marco y activa el fondo translúcido.
-        self.configure(
-            flags=["frameless"],
-            attributes=["translucent-background"]
-        )
+        self.configure(flags=["frameless"], attributes=["translucent-background"])
+
+        if hasattr(self, "menu_bar"):
+            self.menu_bar.hide()
 
         self.show()
 
@@ -365,3 +325,56 @@ class AppWindow(QMainWindow, FWidget):
             self.showNormal()
         else:
             self.showFullScreen()
+
+    def kiosk(self, hide_menu: bool = True) -> None:
+        """
+        Toggles the application's Kiosk Mode.
+
+        This method is designed for service applications (e.g., gas stations,
+        information totems, ATMs) where the user's focus must be restricted
+        entirely to the application.
+
+        .. warning::
+            **Exit Strategy Required:** Since Kiosk Mode removes window decorations
+            (close/minimize buttons) and forces the window to stay on top, you **must** provide
+            a programmatic way to exit (e.g., a hidden button, a password-protected
+            exit, or a global keyboard shortcut). Failure to do so may require a
+            system-level process termination.
+
+        **Behavior:**
+        - **Activation:** If the window is not in fullscreen, it applies
+          a frameless style, forces the window to stay on top of all others,
+          hides the system menu bar (optional), and expands to fill the entire screen.
+        - **Deactivation:** If the window is already in fullscreen, it calls
+          :meth:`normalize` to restore the standard window decorations,
+          normal desktop state, and restores the menu bar visibility.
+
+        :param hide_menu: Whether to hide the global :class:`~fluvel.core.MenuBar.MenuBar`
+                          when entering Kiosk Mode. Defaults to ``True``.
+        :type hide_menu: bool
+
+        :rtype: None
+
+        Example
+        -------
+        .. code-block:: python
+
+            # Perfect for a "Start Service" button or an administrative hotkey
+            self.kiosk(hide_menu=True)
+        """
+
+        if not self.isFullScreen():
+            self.configure(
+                flags=["frameless", "always-on-top"], attributes=["translucent-background"]
+            )
+
+            if hide_menu and hasattr(self, "menu_bar"):
+                self.menu_bar.hide()
+
+            self.showFullScreen()
+
+        else:
+            self.normalize()
+
+            if hasattr(self, "menu_bar"):
+                self.menu_bar.show()

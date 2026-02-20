@@ -1,4 +1,13 @@
-def configure_process(obj: object, mapping: dict, **kwargs: any) -> None:
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
+from typing import Any
+
+from PySide6.QtCore import SignalInstance
+from PySide6.QtWidgets import QWidget
+
+
+def configure_process(obj: QWidget, mapping: dict[str, str], **kwargs: dict[str, Any]) -> None:
     """
     Configure properties, methods, and signals of a PySide6 object in a generic way.
 
@@ -12,33 +21,22 @@ def configure_process(obj: object, mapping: dict, **kwargs: any) -> None:
         **kwargs (any): Configuration arguments that will be processed.
     """
     for key, value in kwargs.items():
-        try:
-            # Get the method name
-            method_name = mapping[key]
 
-            # if method is not none
-            if method_name:
+        if method_name := mapping.get(key):
+            # Obtaining the method through its name
+            attr = getattr(obj, method_name)
 
-                # Obtaining the method through its name
-                method = getattr(obj, method_name)
+            if isinstance(attr, SignalInstance):
+                attr.connect(value)
 
-                # and Execute
+            else:
                 if isinstance(value, (tuple, list)):
-                    method(*value)
+                    try:
+                        # Try this if the arguments need to be passed positionally
+                        attr(*value)
+                    except TypeError:
+                        # Attempting to pass the tuple/list as a single argument
+                        attr(value)
+
                 else:
-                    method(value)
-
-        # A TypeError in the call to this function indicates
-        # that the object method is being called incorrectly
-        # or with incorrect arguments, so in this situation,
-        # given the way the algorithm and MAPPING_METHODS are set up, it is inferred that it is a
-        # PySide6 signal and an attempt is made to connect it using the obj.signal.connect() method.
-        # e.g. button.clicked.connect(slot=value)
-        except TypeError:
-
-            # obj.signal = method | line 23
-            method.connect(value)
-
-        except KeyError:
-            # Ignore keys that do not represent a PySide6 method.
-            continue
+                    attr(value)

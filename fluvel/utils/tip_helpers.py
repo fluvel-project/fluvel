@@ -1,3 +1,6 @@
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 from typing import Literal
 
 # ===============
@@ -6,58 +9,24 @@ from typing import Literal
 
 AllWidgetsTypes = Literal[
     "FLabel",
-    "FLineEdit",
+    "FInput",
     "FButton",
     "FLinkButton",
     "FCheckBox",
     "FRadioButton",
-]
-
-# ====================
-# Generics in QWidgets
-# ====================
-
-WidgetAttributes = Literal[
-    "translucent-background"
-]
-
-# =================
-# Used in AppWindow
-# =================
-
-WindowFlags = Literal[
-    "frameless", 
-    "always-on-top",
-    "always-on-bottom",
-    "title",
-    "sys-menu",
-    "maximize-button",
-    "minimize-button",
-    "close-button",
-    "click-through",
-    "translucent-background"
-]
-
-WindowStates = Literal[
-    "Maximized",
-    "Minimized",
-    "FullScreen",
-    "NoState",
-    "Active"
+    "FSlider",
+    "FProgressBar",
+    "FSwitch",
+    "IconButton",
 ]
 
 # =================
 # Used in MenuBar
 # =================
 
-ActionSignalTypes = Literal[
-    "triggered", 
-    "toggled", 
-    "changed", 
-    "hovered"
-]
+ActionSignalTypes = Literal["triggered", "toggled", "changed", "hovered"]
 
-ActionProperties = Literal[
+ActionPropertyTypes = Literal[
     "Text",
     "Icon",
     "Shortcut",

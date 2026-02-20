@@ -1,0 +1,26 @@
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
+CONFIG_TEMPLATE = """#:schema ./.fluvel/schema/config.schema.json
+[fluvel]
+production = false
+
+[app]
+name = "MyFluvelApp"
+display_name = "My App for Development UI's"
+desktop_filename = "com.robotid.myfluvelapp"
+version = "0.1.0"
+organization = "Robotid"
+domain = "example.com"
+icon = "path/to/icon.png"
+licence = "LGPLv3"
+copyright = "© 2025 Robotid"
+
+[ui]
+theme = "bootstrap"
+language = "en"
+
+[window]
+title = "MyApp"
+size = [900, 600]
+"""

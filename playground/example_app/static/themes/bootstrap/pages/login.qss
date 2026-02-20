@@ -1,6 +1,0 @@
-*[class~="bg-sign-in-gradient"] {
-    background-color: qlineargradient(x1:1, y1:0, x2:0, y2:0, stop:0 #5239ac, stop:1 #5752b6);
-}
-*[class~="bg-sign-up-gradient"] {
-    background-color: qlineargradient(x1:1, y1:0, x2:0, y2:0, stop:0 #5550ac, stop:1 #5f6cc4);
-}

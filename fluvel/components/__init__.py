@@ -1,7 +1,3 @@
-"""
-This module import all Fluvel Compontents
-"""
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-from fluvel.components.widgets import *
-from fluvel.components.layouts import *
-from fluvel.components.gui import *

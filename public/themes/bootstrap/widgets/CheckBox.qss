@@ -1,0 +1,39 @@
+QCheckBox {
+    spacing: 5px;
+    color: #212529;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    background-color: #fff;
+}
+
+QCheckBox::indicator:unchecked {
+    border: 1px solid #ced4d1;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+QCheckBox::indicator:hover {
+    border-color: #86b7fe;
+}
+
+QCheckBox::indicator:checked:hover {
+    background-color: #0a58ca;
+    border-color: #0a58ca;
+}
+
+QCheckBox::indicator:pressed {
+    background-color: #0a58ca;
+    border-color: #0a58ca;
+}
+
+QCheckBox:focus {
+    outline: none;
+}

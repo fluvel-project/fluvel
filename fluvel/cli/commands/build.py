@@ -1,11 +1,32 @@
-import click, json, re
-from fluvel.core.tools import load_style_sheet
-from fluvel.controllers.ContentHandler import ContentHandler
-from fluvel.utils.paths import CONTENT_DIR, PROD_CONTENT_DIR, THEMES_DIR, PROD_THEMES_DIR, APP_ROOT
-from fluvel.core.exceptions.expect_handler import expect
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-# CLI tools
-from fluvel.cli.tools.ClickStyledMessage import echo
+import re
+import shutil
+from pathlib import Path
+
+import click
+
+from fluvel.cli.tools.ClickStyled import echo
+
+# Flvuel Utils
+from fluvel.core.tools import dump_json, load_style_sheet
+
+# Expect Handler
+from fluvel.core.tools.expect_handler import expect
+
+# Fluvel Core
+from fluvel.i18n.I18nLoader import I18nLoader
+from fluvel.user.UserSettings import Settings
+from fluvel.utils.minify_qss import minify_qss
+from fluvel.utils.paths import (
+    CONFIG_PATH,
+    I18N_DIR,
+    PROD_STATIC_DIR,
+    PROD_THEMES_DIR,
+    THEMES_DIR,
+)
+
 
 @click.command
 def build() -> None:
@@ -13,33 +34,34 @@ def build() -> None:
     Builds the application for production mode.
 
     This command performs three main tasks:
-    
-    1. Compiles dynamic content (menus, static text) into optimized JSON files 
-       for each language.
-    2. Consolidates multi-file QSS themes into single, optimized QSS files.
+
+    1. Compiles dynamic content (menus, static text) into optimized JSON files
+       for each language.\n
+    2. Consolidates multi-file QSS themes into single, optimized QSS files.\n
     3. Switches the application's configuration from development mode to
        production mode by modifying the ``DEV_MODE`` key in ``config.toml``.
     """
-    
+
+    echo("[blue]([FLV] Starting production build...)")
+
+    if PROD_STATIC_DIR.exists():
+        shutil.rmtree(PROD_STATIC_DIR)
+
+    PROD_STATIC_DIR.mkdir(parents=True)
+
     generate_json_files()
     generate_themes()
     change_dev_mode()
-    
-    echo(
-        ":yellow[LOG: THE] " \
-        ":blue['DEV_MODE'] " \
-        ":yellow[KEY IN THE] " \
-        ":blue['config.toml'] " \
-        ":yellow[FILE WAS MODIFIED TO RUN THE APPLICATION WITH THE OPTIMIZED FILES.]"
-    )
 
-@expect.IOError()
+    echo("[green]([DONE]) Build completed successfully.")
+
+
 def generate_json_files() -> None:
     """
     Generates optimized JSON files for static content and menus.
 
     It iterates through all language folders in the development content directory
-    and uses :py:class:`fluvel.controllers.ContentHandler` to compile the
+    and uses :class:`fluvel.controllers.ContentHandler` to compile the
     dynamic content into two static JSON files per language in the
     production content directory:
 
@@ -51,36 +73,38 @@ def generate_json_files() -> None:
     :raises IOError: If there are issues creating directories or writing files.
     """
 
-    for lang in CONTENT_DIR.iterdir():
+    load_content = I18nLoader.load
 
-        prod_lang_dir = PROD_CONTENT_DIR / lang.name
+    if not I18N_DIR.exists():
+        return
+
+    for lang in I18N_DIR.iterdir():
+        prod_lang_dir = PROD_STATIC_DIR / lang.name
         prod_lang_dir.mkdir(parents=True, exist_ok=True)
 
         menus_folder = prod_lang_dir / "menus"
         menus_folder.mkdir(parents=True, exist_ok=True)
 
-        ContentHandler.load_content("development", lang.name)
+        raw = load_content(lang, False)
 
         menus_json = menus_folder / "menus.json"
         content_json = prod_lang_dir / f"{lang.name}.json"
 
-        with open(menus_json, "w", encoding="utf-8") as f:
-            json.dump(ContentHandler.MENU_CONTENT, f, indent=4, ensure_ascii=False)
+        dump_json(menus_json, raw.MENUS, indent=False)
+        dump_json(content_json, raw.TEXTS, indent=False)
 
-        with open(content_json, "w", encoding="utf-8") as f:
-            json.dump(ContentHandler.STATIC_CONTENT, f, indent=4, ensure_ascii=False)
+        echo(f"[green]([LANG]) [blue]({lang.name}) successfully optimized.")
 
-        echo(f":green[LANG:] :blue[{lang.name}] successfully optimized.")
 
 @expect.IOError()
 def generate_themes() -> None:
     """
     Consolidates QSS theme files into single production files.
 
-    It iterates through all theme folders in the development themes directory. 
-    For each theme, it recursively finds all ``.qss`` files, concatenates their 
-    content using :py:func:`fluvel.core.tools.load_style_sheet`, and writes the 
-    result to a single ``<theme_name>.qss`` file in the production themes 
+    It iterates through all theme folders in the development themes directory.
+    For each theme, it recursively finds all ``.qss`` files, concatenates their
+    content using :func:`fluvel.core.tools.load_style_sheet`, and writes the
+    result to a single ``<theme_name>.qss`` file in the production themes
     directory.
 
     :raises IOError: If there are issues creating directories or writing files.
@@ -89,51 +113,66 @@ def generate_themes() -> None:
     PROD_THEMES_DIR.mkdir(parents=True, exist_ok=True)
 
     for theme in THEMES_DIR.iterdir():
+        if not theme.is_dir():
+            continue
 
         theme_file = PROD_THEMES_DIR / f"{theme.name}.qss"
-        
-        # List of .qss files
-        qss_files: list = theme.rglob("*.qss")
 
-        # Content to be loaded to the ui
-        qss_content: str = ""
-
-        # Iterating and concatenating QSS content from files
-        for qss_file in qss_files:
-            qss_content += load_style_sheet(qss_file)
+        qss_content = "\n".join(load_style_sheet(f) for f in theme.rglob("*.qss"))
+        qss = minify_qss(qss_content)
 
         with open(theme_file, "w", encoding="utf-8") as f:
-            f.write(qss_content)
+            f.write(qss)
 
-        echo(f":green[THEME:] adding :blue[{theme.name}]")
+        echo(f"[green]([THEME]) [blue]({theme.name}) consolidated and minified.")
+
+
+def _change_dev_mode_toml(file_path: Path) -> None:
+    # Reads the file content
+    content_str = file_path.read_text(encoding="utf-8")
+
+    pattern = r"(\bproduction\s*=\s*)(true|false)"
+    replace_str = r"\g<1>true"
+
+    changed_content = re.sub(pattern, replace_str, content_str, count=1, flags=re.IGNORECASE)
+
+    # Writes all the modified content at once
+    file_path.write_text(changed_content, encoding="utf-8")
+
+
+def _change_dev_mode_json(file_path: Path) -> None:
+    Settings.init_config(file_path)
+
+    config_dict = Settings.to_dict()
+
+    if "fluvel" in config_dict:
+        config_dict["fluvel"]["production"] = True
+
+    dump_json(file_path, config_dict, indent=True)
+
 
 @expect.IOError()
 def change_dev_mode() -> None:
     """
     Updates the 'DEV_MODE' setting in config.toml to false.
 
-    This function reads the main ``config.toml`` file, uses a regular expression 
-    to find and replace the value associated with the ``DEV_MODE`` key, setting it 
-    to ``false``. This ensures the application runs using the optimized production 
-    files generated by :py:func:`generate_json_files` and :py:func:`generate_themes`.
+    This function reads the main ``config.toml`` file, uses a regular expression
+    to find and replace the value associated with the ``DEV_MODE`` key, setting it
+    to ``false``. This ensures the application runs using the optimized production
+    files generated by :func:`generate_json_files` and :func:`generate_themes`.
 
     :raises IOError: If there are issues reading or writing the configuration file.
     """
 
-    config_file_path = APP_ROOT / "config.toml"
-
     # Ensures the file exists before attempting to read it
-    if not config_file_path.exists():
-        click.echo(f"Error: The configuration file was not found in {config_file_path}")
+    if not CONFIG_PATH.exists():
+        echo(f"[red]([ERROR]) The configuration file was not found in [yellow]({CONFIG_PATH})")
         return
-        
-    # Reads the file content
-    content_str = config_file_path.read_text(encoding="utf-8") 
 
-    pattern = r"(\bDEV_MODE\s*=\s*)([a-z]+)(\s*\n)"
-    replace_str = r"\g<1>false\g<3>"
+    if CONFIG_PATH.suffix == ".json":
+        _change_dev_mode_json(CONFIG_PATH)
 
-    changed_content = re.sub(pattern, replace_str, content_str, count=1, flags=re.IGNORECASE)
+    else:
+        _change_dev_mode_toml(CONFIG_PATH)
 
-    # Writes all the modified content at once
-    config_file_path.write_text(changed_content, encoding="utf-8")
+    echo("[green]([CONF]) Environment switched to [red](PRODUCTION).")

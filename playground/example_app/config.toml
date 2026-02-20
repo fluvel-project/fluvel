@@ -1,18 +1,20 @@
 [fluvel]
-DEV_MODE = true
+production = false
 
 [app]
-name = "Fluvel Framework"
+name = "MyFluvelApp"
+display_name = "My App for Development UI's"
+desktop_filename = "com.robotid.myfluvelapp"
 version = "0.1.0"
-author = "Robotid"
-homepage = "https://www.example.com"
-licence = "MIT"
+organization = "Robotid"
+domain = "example.com"
+icon = "path/to/icon.png"
+licence = "LGPLv3"
 copyright = "© 2025 Robotid"
 
 [ui]
 theme = "bootstrap"
-language = "en"
 
 [window]
-title = "FluvelApp"
-
+title = "MyApp"
+size = [900, 600]

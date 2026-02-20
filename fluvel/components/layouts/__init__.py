@@ -1,6 +1,8 @@
-from .VBoxLayout import VBoxLayout
-from .HBoxLayout import HBoxLayout
-from .FormLayout import FormLayout
-from .GridLayout import GridLayout
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-__all__ = ["VBoxLayout", "HBoxLayout", "FormLayout", "GridLayout"]
+from .GridLayout import GridLayout
+from .HBoxLayout import HBoxLayout
+from .VBoxLayout import VBoxLayout
+
+__all__ = ["VBoxLayout", "HBoxLayout", "GridLayout"]

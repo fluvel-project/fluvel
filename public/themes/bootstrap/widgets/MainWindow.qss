@@ -1,0 +1,6 @@
+QMainWindow {
+    background-color: #fff; 
+    color: #212529;
+    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+}

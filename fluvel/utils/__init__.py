@@ -1,3 +1,6 @@
-from .paths import APP_ROOT
+# Copyright (C) 2025-2026 J. F. Escobar
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-__all__ = ["APP_ROOT"]
+from .paths import PROJECT_ROOT
+
+__all__ = ["PROJECT_ROOT"]

@@ -1,0 +1,3 @@
+QSpinBox {
+    background-color: white;
+}

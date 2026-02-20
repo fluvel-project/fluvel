@@ -18,53 +18,43 @@ It demonstrates the key principles of Fluvel's architecture:
     (e.g., "br-left[5px]", "m-0", "p-1").
 """
 
-from fluvel import Page, route
-from fluvel.composer import Prefab, Canvas
+import fluvel as fl
 
-@Prefab
-def Badge(canvas: Canvas, title: str, description: str, color: str) -> Canvas:
-    """
-    Defines the atomic component of a two-part badge.
-    
-    Abstracts the complexity of margins, zero spacing, and the application of 
-    rounded edges only on the outer corners.
-    
-    :param title: The text for the left section (e.g., 'licence').
-    :param description: The text for the right section (e.g., 'MIT').
-    :param colour: The base colour for the description section (e.g., 'green', which becomes 'bg-green-400').
-    """
+
+@fl.Prefab
+def Badge(canvas: fl.Canvas, title: str, description: str, color: str) -> fl.Canvas:
 
     with canvas.Horizontal() as h:
-        h.adjust(spacing=0, margins=(0, 0, 0, 0), alignment="center")
+        h.adjust(spacing=0, margins=0, alignment="center")
 
-        h.Label(text=title, style="bg-gray-500 m-0 p-1 bg-white fg-white br-left[5px]", alignment="right")
-        h.Label(text=description, style=f"bg-{color}-400 m-0 p-1 fg-white br-right[5px]", alignment="left")
+        h.Label(
+            text=title,
+            style="bg-gray-500 m[0px] p[2px] fg[white] br-l[5px]",
+            alignment="right",
+        )
+        h.Label(
+            text=description,
+            style=f"bg-{color}-400 m-0 p-1 fg[white] br-r[5px]",
+            alignment="left",
+        )
 
     return canvas
 
-@Prefab
-def RowOfBadges(canvas: Canvas, badges: list[tuple[str, str, str]]) -> Canvas:
-    """
-    Container component that iterates over a list of data to generate and assemble 
-    multiple Badges in a row.
-    
-    :param badges: List of tuples with the structure (title, description, colour).
-    """
+
+@fl.Prefab
+def RowOfBadges(canvas: fl.Canvas, badges: list[tuple[str, str, str]]) -> fl.Canvas:
 
     with canvas.Horizontal() as h:
-        
         for title, description, color in badges:
-            
             # Create and insert each Badge
-            h.Prefab(Badge(title=title, description=description, color=color))
+            h.add(Badge(title=title, description=description, color=color))
 
     return canvas
 
-@route("github-badges")
-class GHubBadges(Page):
 
-    def build_ui(self):
-
+@fl.route("/github-badges")
+class GHubBadges(fl.Page):
+    def build(self):
         with self.Vertical(style="bg-slate-200") as v:
             v.adjust(spacing=10, alignment="center")
 
@@ -75,11 +65,12 @@ class GHubBadges(Page):
                 ("pypi", "v1.4.0", "blue"),
                 ("codecov", "75%", "orange"),
                 ("status", "stable", "lime"),
-                ("architecture", "C-IMC", "purple"),
+                ("architecture", "MVVM", "purple"),
             ]
 
             # Example title with advanced text styles
-            v.Label(text="Github Badges", style="text-3xl font-bold f-family[consolas]", align="center")
+            v.Label(text="Github Badges", style="text-3xl font-bold", align="center",)
 
             # High-level component (RowOfBadges), passing data
-            v.Prefab(RowOfBadges(badges=BADGES))
+            v.add(RowOfBadges(badges=BADGES))
+        
