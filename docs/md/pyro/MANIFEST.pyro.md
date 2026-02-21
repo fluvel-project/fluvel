@@ -1,6 +1,6 @@
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../../assets/banner-pyro-dark.svg">
-    <img src="../../assets/banner-pyro-light.svg" alt="Pyro Logo">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/fluvel-project/fluvel/main/assets/brands/banner-pyro-dark.svg">
+    <img src="https://raw.githubusercontent.com/fluvel-project/fluvel/main/assets/brands/banner-pyro-light.svg" alt="Pyro Logo">
 </picture>
 
 # The Future of Pyro

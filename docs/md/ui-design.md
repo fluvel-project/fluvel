@@ -270,5 +270,3 @@ graph TD
 
 > [!IMPORTANT]
 > The Hot-Reloader destroys and recreates the current view, but it **keeps the application state** intact.
-
-**Demonstration Video**

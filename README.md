@@ -74,8 +74,8 @@ Once you have your first project up and running, you can delve deeper into Fluve
 * [1. Architecture](docs/md/architecture.md)
 * [2. UI Design](docs/md/ui-design.md)
 * [3. Styling](docs/md/styling.md)
-* [4. Reactivity](docs/md/reactivity.md)
-* [5. Internationalization (i18n)](docs/md/i18n.md)
+* [4. Internationalization (i18n)](docs/md/i18n.md)
+* [5. Reactivity](docs/md/reactivity.md)
 * [6. Deployment](docs/md/deployment.md)
 
 ## Project Roadmap
